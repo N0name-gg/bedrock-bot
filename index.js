@@ -43,16 +43,16 @@ client.on('interactionCreate', async interaction => {
       return interaction.reply({ content: 'Bots are already active! Use `/bot_leave` first.', ephemeral: true });
     }
 
-    await interaction.reply(`Initializing and connecting ${count} Bedrock AFK bot(s)...`);
+    await interaction.reply(`Initializing and connecting ${count} Bedrock AFK bot(s) to mintsmp.net...`);
 
     for (let i = 1; i <= count; i++) {
       const botName = `AFK_Bot_${i}`;
       try {
         const bClient = bedrock.createClient({
-          host: process.env.MC_HOST,
-          port: parseInt(process.env.MC_PORT || '19132'),
+          host: 'mintsmp.net',
+          port: 25125,
           username: botName,
-          offline: true // Set to false if you are using Microsoft/Xbox accounts
+          offline: false // Set to false to prompt Microsoft/Xbox Live authentication in Railway logs
         });
 
         bClient.on('spawn', () => {
@@ -74,7 +74,7 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
-    await interaction.followUp(`Successfully deployed ${activeBots.size} bot(s) to the server!`);
+    await interaction.followUp(`Successfully attempted deployment for ${activeBots.size} bot(s). Check Railway logs for Microsoft login links if required!`);
 
   } else if (commandName === 'bot_leave') {
     if (activeBots.size === 0) {
@@ -97,7 +97,6 @@ client.on('interactionCreate', async interaction => {
     const gameCommand = interaction.options.getString('command');
     
     for (const [name, bClient] of activeBots.entries()) {
-      // Send chat/command packet to the server for each bot
       bClient.queue('text', {
         type: 'chat',
         needs_translation: false,
