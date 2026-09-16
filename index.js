@@ -1,65 +1,124 @@
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
-const bedrock = require('bedrock-protocol');
-require('dotenv').config();
+const { Client, GatewayIntentBits } = require('discord.js');
+const { createClient } = require('bedrock-protocol');
+const express = require('express');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-const activeBots = new Map();
+// Express Dashboard Setup (Fixed port typo)
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName('bot_join')
-    .setDescription('Log your main account into mintsmp.net')
-].map(c => c.toJSON());
-
-client.once('ready', async () => {
-  console.log(`Discord Bot logged in as ${client.user.tag}`);
-  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-  try {
-    await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log('Successfully registered slash commands.');
-  } catch (error) {
-    console.error(error);
-  }
+app.get('/', (req, res) => {
+    res.send('🌐 Bedrock Bot Dashboard is Running!');
 });
 
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-  const { commandName } = interaction;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Dashboard running on port ${PORT}`);
+});
 
-  if (commandName === 'bot_join') {
-    if (activeBots.size > 0) {
-      return interaction.reply({ content: 'Your account is already connected!', ephemeral: true });
-    }
+// Bot Configuration for mintsmp.net
+const START_ACCOUNT = 60;
+const END_ACCOUNT = 69;
+const HOST = 'mintsmp.net';
+const PORT_MC = 25125;
 
-    await interaction.reply('Initiating Microsoft login for your account... Check Railway logs for the login link!');
+const bots = {};
+
+// Function to start a bot client safely with a small delay
+function startBot(accountNumber) {
+    const botId = accountNumber - 50; 
+    
+    console.log(`[Bot ${botId}] Attempting to connect account ${accountNumber}...`);
 
     try {
-      const bClient = bedrock.createClient({
-        host: 'mintsmp.net',
-        port: 25125,
-        // When offline is false, bedrock-protocol uses Microsoft device authentication
-        offline: false 
-      });
+        const client = createClient({
+            host: HOST,
+            port: PORT_MC,
+            username: `MintBot_${accountNumber}`,
+            offline: true // Using offline mode as configured in your previous script
+        });
 
-      bClient.on('spawn', () => {
-        console.log('Your account successfully spawned into mintsmp.net');
-      });
+        client.on('spawn', () => {
+            console.log(`[Bot ${botId}] Successfully spawned into the server.`);
+        });
 
-      bClient.on('kicked', (reason) => {
-        console.log('Account was kicked:', reason);
-        activeBots.delete('Main_Account');
-      });
+        client.on('close', () => {
+            console.log(`[Bot ${botId}] Disconnected. Reconnecting in 15 seconds...`);
+            setTimeout(() => startBot(accountNumber), 15000);
+        });
 
-      bClient.on('close', () => {
-        console.log('Account connection closed.');
-        activeBots.delete('Main_Account');
-      });
+        client.on('error', (err) => {
+            console.log(`[Bot ${botId}] Error: ${err.message}`);
+        });
 
-      activeBots.set('Main_Account', bClient);
+        bots[botId] = client;
     } catch (err) {
-      console.error('Connection error:', err.message);
+        console.error(`[Bot ${botId}] Failed to initialize:`, err.message);
     }
-  }
+}
+
+// Stagger bot logins slightly to prevent crashing Railway on startup
+let delay = 0;
+for (let acc = START_ACCOUNT; acc <= END_ACCOUNT; acc++) {
+    setTimeout(() => startBot(acc), delay);
+    delay += 2000; // 2 second gap between each bot joining
+}
+
+// Discord Controller Setup
+const discordClient = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
-client.login(process.env.DISCORD_TOKEN);
+const PREFIX = '!cmd';
+
+discordClient.on('ready', () => {
+    console.log(`🤖 Discord Controller logged in as ${discordClient.user.tag}`);
+});
+
+discordClient.on('messageCreate', async (message) => {
+    if (message.author.bot) return;
+    if (!message.content.startsWith(PREFIX)) return;
+
+    const args = message.content.slice(PREFIX.length).trim().split(' ');
+    const targetId = args[0]; 
+    const commandText = args.slice(1).join(' ');
+
+    if (!targetId || !commandText) {
+        return message.reply('Usage: `!cmd <bot_id/all> <text or command>`');
+    }
+
+    if (targetId.toLowerCase() === 'all') {
+        for (const id in bots) {
+            if (bots[id]) {
+                bots[id].queue('text', {
+                    type: 'chat',
+                    needs_translation: false,
+                    source_name: bots[id].username,
+                    xuid: '',
+                    platform_chat_id: '',
+                    filtered_message: '',
+                    message: commandText
+                });
+            }
+        }
+        message.reply(`Command broadcasted to all active bots: "${commandText}"`);
+    } else if (bots[targetId]) {
+        bots[targetId].queue('text', {
+            type: 'chat',
+            needs_translation: false,
+            source_name: bots[targetId].username,
+            xuid: '',
+            platform_chat_id: '',
+            filtered_message: '',
+            message: commandText
+        });
+        message.reply(`Sent command from Bot ${targetId}: "${commandText}"`);
+    } else {
+        message.reply(`Bot ID ${targetId} not found. Valid IDs are 10 to 19.`);
+    }
+});
+
+// Uses your Railway environment variable securely
+discordClient.login(process.env.DISCORD_TOKEN);
