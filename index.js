@@ -4,21 +4,12 @@ require('dotenv').config();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-// Store active bot instances
 const activeBots = new Map();
 
 const commands = [
   new SlashCommandBuilder()
     .setName('bot_join')
-    .setDescription('Spawn a specified number of AFK bots (1-9)')
-    .addIntegerOption(opt => opt.setName('count').setDescription('Number of bots to join (1-9)').setRequired(true)),
-  new SlashCommandBuilder()
-    .setName('bot_leave')
-    .setDescription('Disconnect all active bots'),
-  new SlashCommandBuilder()
-    .setName('bot_cmd')
-    .setDescription('Send an in-game command through all active bots')
-    .addStringOption(opt => opt.setName('command').setDescription('The command to run (e.g. /home)').setRequired(true))
+    .setDescription('Spawn an AFK bot to mintsmp.net')
 ].map(c => c.toJSON());
 
 client.once('ready', async () => {
@@ -37,78 +28,40 @@ client.on('interactionCreate', async interaction => {
   const { commandName } = interaction;
 
   if (commandName === 'bot_join') {
-    const count = Math.min(Math.max(interaction.options.getInteger('count'), 1), 9);
-    
     if (activeBots.size > 0) {
-      return interaction.reply({ content: 'Bots are already active! Use `/bot_leave` first.', ephemeral: true });
+      return interaction.reply({ content: 'Bot is already active!', ephemeral: true });
     }
 
-    await interaction.reply(`Initializing and connecting ${count} Bedrock AFK bot(s) to mintsmp.net...`);
+    await interaction.reply('Connecting AFK bot to mintsmp.net...');
 
-    for (let i = 1; i <= count; i++) {
-      const botName = `AFK_Bot_${i}`;
-      try {
-        const bClient = bedrock.createClient({
-          host: 'mintsmp.net',
-          port: 25125,
-          username: botName,
-          offline: false // Set to false to prompt Microsoft/Xbox Live authentication in Railway logs
-        });
-
-        bClient.on('spawn', () => {
-          console.log(`${botName} successfully spawned into the server.`);
-        });
-
-        bClient.on('kicked', (reason) => {
-          console.log(`${botName} was kicked:`, reason);
-          activeBots.delete(botName);
-        });
-
-        bClient.on('close', () => {
-          activeBots.delete(botName);
-        });
-
-        activeBots.set(botName, bClient);
-      } catch (err) {
-        console.error(`Failed to connect ${botName}:`, err.message);
-      }
-    }
-
-    await interaction.followUp(`Successfully attempted deployment for ${activeBots.size} bot(s). Check Railway logs for Microsoft login links if required!`);
-
-  } else if (commandName === 'bot_leave') {
-    if (activeBots.size === 0) {
-      return interaction.reply({ content: 'No bots are currently active.', ephemeral: true });
-    }
-
-    let count = activeBots.size;
-    for (const [name, bClient] of activeBots.entries()) {
-      bClient.close();
-    }
-    activeBots.clear();
-
-    await interaction.reply(`Disconnected all ${count} active bots.`);
-
-  } else if (commandName === 'bot_cmd') {
-    if (activeBots.size === 0) {
-      return interaction.reply({ content: 'No active bots to execute commands.', ephemeral: true });
-    }
-
-    const gameCommand = interaction.options.getString('command');
-    
-    for (const [name, bClient] of activeBots.entries()) {
-      bClient.queue('text', {
-        type: 'chat',
-        needs_translation: false,
-        source_name: name,
-        xuid: '',
-        platform_chat_id: '',
-        filtered_message: '',
-        message: gameCommand
+    try {
+      const bClient = bedrock.createClient({
+        host: 'mintsmp.net',
+        port: 25125,
+        username: 'AFK_Bot_1',
+        offline: true // Change to false only if the server strictly requires Xbox authentication
       });
-    }
 
-    await interaction.reply(`Command \`${gameCommand}\` executed by all ${activeBots.size} bots.`);
+      bClient.on('spawn', () => {
+        console.log('AFK_Bot_1 successfully spawned into mintsmp.net');
+      });
+
+      bClient.on('kicked', (reason) => {
+        console.log('Bot was kicked:', reason);
+        activeBots.delete('AFK_Bot_1');
+      });
+
+      bClient.on('close', () => {
+        console.log('Bot connection closed.');
+        activeBots.delete('AFK_Bot_1');
+      });
+
+      activeBots.set('AFK_Bot_1', bClient);
+      await interaction.followUp('AFK Bot has successfully connected to the server!');
+    } catch (err) {
+      console.error('Connection error:', err.message);
+      await interaction.followUp(`Failed to connect: ${err.message}`);
+    }
   }
 });
 
