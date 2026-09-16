@@ -3,13 +3,12 @@ const bedrock = require('bedrock-protocol');
 require('dotenv').config();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
 const activeBots = new Map();
 
 const commands = [
   new SlashCommandBuilder()
     .setName('bot_join')
-    .setDescription('Spawn an AFK bot to mintsmp.net')
+    .setDescription('Log your main account into mintsmp.net')
 ].map(c => c.toJSON());
 
 client.once('ready', async () => {
@@ -29,38 +28,36 @@ client.on('interactionCreate', async interaction => {
 
   if (commandName === 'bot_join') {
     if (activeBots.size > 0) {
-      return interaction.reply({ content: 'Bot is already active!', ephemeral: true });
+      return interaction.reply({ content: 'Your account is already connected!', ephemeral: true });
     }
 
-    await interaction.reply('Connecting AFK bot to mintsmp.net...');
+    await interaction.reply('Initiating Microsoft login for your account... Check Railway logs for the login link!');
 
     try {
       const bClient = bedrock.createClient({
         host: 'mintsmp.net',
         port: 25125,
-        username: 'AFK_Bot_1',
-        offline: true // Change to false only if the server strictly requires Xbox authentication
+        // When offline is false, bedrock-protocol uses Microsoft device authentication
+        offline: false 
       });
 
       bClient.on('spawn', () => {
-        console.log('AFK_Bot_1 successfully spawned into mintsmp.net');
+        console.log('Your account successfully spawned into mintsmp.net');
       });
 
       bClient.on('kicked', (reason) => {
-        console.log('Bot was kicked:', reason);
-        activeBots.delete('AFK_Bot_1');
+        console.log('Account was kicked:', reason);
+        activeBots.delete('Main_Account');
       });
 
       bClient.on('close', () => {
-        console.log('Bot connection closed.');
-        activeBots.delete('AFK_Bot_1');
+        console.log('Account connection closed.');
+        activeBots.delete('Main_Account');
       });
 
-      activeBots.set('AFK_Bot_1', bClient);
-      await interaction.followUp('AFK Bot has successfully connected to the server!');
+      activeBots.set('Main_Account', bClient);
     } catch (err) {
       console.error('Connection error:', err.message);
-      await interaction.followUp(`Failed to connect: ${err.message}`);
     }
   }
 });
