@@ -1,0 +1,14 @@
+{
+  "name": "bedrock-multi-bot",
+  "version": "1.0.0",
+  "description": "Multi-account Bedrock AFK manager via Discord",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bedrock-protocol": "^3.55.0",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5"
+  }
+}
