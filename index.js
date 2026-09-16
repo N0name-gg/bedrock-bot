@@ -2,16 +2,16 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const { createClient } = require('bedrock-protocol');
 const express = require('express');
 
-// Express Dashboard Setup (Fixed port typo)
+// Express Dashboard Setup (Strictly using Railway's PORT environment variable)
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-    res.send('🌐 Bedrock Bot Dashboard is Running!');
+    res.send('🌐 Bedrock Bot Dashboard is Running and Healthy!');
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Dashboard running on port ${PORT}`);
+    console.log(`🌐 Express Dashboard running on port ${PORT}`);
 });
 
 // Bot Configuration for mintsmp.net
@@ -22,7 +22,6 @@ const PORT_MC = 25125;
 
 const bots = {};
 
-// Function to start a bot client safely with a small delay
 function startBot(accountNumber) {
     const botId = accountNumber - 50; 
     
@@ -33,7 +32,7 @@ function startBot(accountNumber) {
             host: HOST,
             port: PORT_MC,
             username: `MintBot_${accountNumber}`,
-            offline: true // Using offline mode as configured in your previous script
+            offline: true
         });
 
         client.on('spawn', () => {
@@ -50,17 +49,21 @@ function startBot(accountNumber) {
         });
 
         bots[botId] = client;
+    } delay => {
+        // safety catch
     } catch (err) {
         console.error(`[Bot ${botId}] Failed to initialize:`, err.message);
     }
 }
 
-// Stagger bot logins slightly to prevent crashing Railway on startup
-let delay = 0;
-for (let acc = START_ACCOUNT; acc <= END_ACCOUNT; acc++) {
-    setTimeout(() => startBot(acc), delay);
-    delay += 2000; // 2 second gap between each bot joining
-}
+// Delay launching bots by 5 seconds so Railway's web health check passes first without triggering SIGTERM
+setTimeout(() => {
+    let delay = 0;
+    for (let acc = START_ACCOUNT; acc <= END_ACCOUNT; acc++) {
+        setTimeout(() => startBot(acc), delay);
+        delay += 3000; // Stagger by 3 seconds each
+    }
+}, 5000);
 
 // Discord Controller Setup
 const discordClient = new Client({
@@ -120,5 +123,4 @@ discordClient.on('messageCreate', async (message) => {
     }
 });
 
-// Uses your Railway environment variable securely
 discordClient.login(process.env.DISCORD_TOKEN);
