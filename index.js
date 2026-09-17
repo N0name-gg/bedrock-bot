@@ -1,5 +1,6 @@
 const { createClient } = require('bedrock-protocol');
 const express = require('express');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,15 +11,17 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 function launchBot() {
-    console.log('Initializing bot authentication flow...');
+    console.log('Initializing bot connection...');
 
     const client = createClient({
         host: 'mintsmp.net',
         port: 25125,
-        offline: false, 
+        offline: false,
         raknetBackend: 'jsp-raknet',
         version: '1.21.50',
-        connectTimeout: 30000, // Extends timeout to 30 seconds to allow successful handshake post-MSA login
+        connectTimeout: 60000, // Extended to 60 seconds
+        // Saves authentication tokens locally so you only log in once
+        profilesFolder: './', 
         onMsaCode: (data) => {
             console.log('==================================================');
             console.log('🔑 MICROSOFT LOGIN REQUIRED FOR MINTBOT_60');
@@ -29,7 +32,7 @@ function launchBot() {
     });
 
     client.on('spawn', () => {
-        console.log('SUCCESS: MintBot_60 successfully authenticated and spawned into mintsmp.net!');
+        console.log('SUCCESS: MintBot_60 successfully spawned into mintsmp.net!');
     });
 
     client.on('close', (reason) => {
