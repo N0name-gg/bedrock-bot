@@ -16,11 +16,15 @@ const client = createClient({
     port: 25125,
     username: 'MintBot_60',
     offline: true,
-    version: '1.21.70' // Matches version 26.51 requirements for the Geyser backend
+    version: '1.21.50' // Explicitly matches the server's expected 26.51 protocol version
 });
 
 client.on('spawn', () => {
     console.log('SUCCESS: MintBot_60 successfully spawned into mintsmp.net!');
+});
+
+client.on('text', (packet) => {
+    console.log(`[Chat] ${packet.message}`);
 });
 
 client.on('close', (reason) => {
