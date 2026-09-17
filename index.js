@@ -1,7 +1,7 @@
 const { createClient } = require('bedrock-protocol');
 const express = require('express');
 
-// Minimal web server to satisfy Railway's health check requirement
+// Minimal web server for Railway health checks
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('Single Bedrock Bot is running!'));
@@ -15,11 +15,17 @@ const client = createClient({
     host: 'mintsmp.net',
     port: 25125,
     username: 'MintBot_60',
-    offline: true
+    offline: true,
+    // Explicitly targeting a stable Bedrock version to match Geyser
+    version: '1.20.0' 
 });
 
 client.on('spawn', () => {
     console.log('SUCCESS: MintBot_60 successfully spawned into mintsmp.net!');
+});
+
+client.on('text', (packet) => {
+    console.log(`[Chat] ${packet.message || packet.needs_translation}`);
 });
 
 client.on('close', (reason) => {
