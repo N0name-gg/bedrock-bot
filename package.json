@@ -1,5 +1,5 @@
 {
-  "name": "bedrock-bot-railway",
+  "name": "single-bedrock-bot",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
