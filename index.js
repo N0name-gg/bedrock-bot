@@ -1,35 +1,33 @@
 const { createClient } = require('bedrock-protocol');
+const express = require('express');
 
-const HOST = 'mintsmp.net';
-const PORT = 25125;
-const USERNAME = 'MintBot_60';
-
-console.log(`Attempting to connect ${USERNAME} to ${HOST}:${PORT}...`);
-
-const client = createClient({
-    host: HOST,
-    port: PORT,
-    username: USERNAME,
-    offline: true
+// Express server to satisfy Railway container health checks
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('Bot is active'));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Health check listening on port ${PORT}`);
 });
 
-client.on('connect', () => {
-    console.log('Connected to the Minecraft server!');
+console.log('Initializing bot connection to mintsmp.net:25125...');
+
+const client = createClient({
+    host: 'mintsmp.net',
+    port: 25125,
+    username: 'MintBot_60',
+    offline: true,
+    raknetBackend: 'jsp-raknet', // Forces pure JS packet handling to bypass container socket restrictions
+    version: '1.21.50'         // Matches the server's protocol requirement
 });
 
 client.on('spawn', () => {
-    console.log(`Successfully spawned as ${USERNAME}!`);
-});
-
-client.on('text', (packet) => {
-    console.log('[CHAT]', packet.message);
+    console.log('SUCCESS: Bot successfully spawned into the server!');
 });
 
 client.on('close', (reason) => {
-    console.log('Connection closed.');
-    console.log('Reason:', reason);
+    console.log('Connection closed:', reason);
 });
 
 client.on('error', (err) => {
-    console.error('Minecraft error:', err);
+    console.log('Connection error:', err.message);
 });
