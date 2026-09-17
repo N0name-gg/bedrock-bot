@@ -1,33 +1,33 @@
 const { createClient } = require('bedrock-protocol');
 const express = require('express');
 
-// Express server to satisfy Railway container health checks
+// Minimal web server to satisfy Railway's health check requirement
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('Bot is active'));
+app.get('/', (req, res) => res.send('Single Bedrock Bot is running!'));
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Health check listening on port ${PORT}`);
+    console.log(`Web server listening on port ${PORT}`);
 });
 
-console.log('Initializing bot connection to mintsmp.net:25125...');
+console.log('Attempting to connect MintBot_60 to mintsmp.net:25125...');
 
 const client = createClient({
     host: 'mintsmp.net',
     port: 25125,
     username: 'MintBot_60',
     offline: true,
-    raknetBackend: 'jsp-raknet', // Forces pure JS packet handling to bypass container socket restrictions
-    version: '1.21.50'         // Matches the server's protocol requirement
+    version: '1.21.50',          // Forces protocol version 26.51
+    raknetBackend: 'jsp-raknet'   // Prevents container packet drops
 });
 
 client.on('spawn', () => {
-    console.log('SUCCESS: Bot successfully spawned into the server!');
+    console.log('SUCCESS: MintBot_60 successfully spawned into mintsmp.net!');
 });
 
 client.on('close', (reason) => {
-    console.log('Connection closed:', reason);
+    console.log('Connection closed. Reason:', reason);
 });
 
 client.on('error', (err) => {
-    console.log('Connection error:', err.message);
+    console.log('Bot connection error:', err.message);
 });
