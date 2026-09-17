@@ -16,7 +16,7 @@ const client = createClient({
     port: 25125,
     username: 'MintBot_60',
     offline: true,
-    version: '1.21.60' // Updated to match the server's expected 26.51 protocol version range
+    version: '1.21.70' // Matches version 26.51 requirements for the Geyser backend
 });
 
 client.on('spawn', () => {
