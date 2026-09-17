@@ -1,36 +1,35 @@
 const { createClient } = require('bedrock-protocol');
-const express = require('express');
 
-// Minimal web server to satisfy Railway's health check requirement
-const app = express();
-const PORT = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('Single Bedrock Bot is running!'));
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Web server listening on port ${PORT}`);
-});
+const HOST = 'mintsmp.net';
+const PORT = 25125;
+const USERNAME = 'MintBot_60';
 
-console.log('Attempting to connect MintBot_60 to mintsmp.net:25125...');
+console.log(`Attempting to connect ${USERNAME} to ${HOST}:${PORT}...`);
 
 const client = createClient({
-    host: 'mintsmp.net',
-    port: 25125,
-    username: 'MintBot_60',
-    offline: true,
-    version: '1.21.50' // Explicitly matches the server's expected 26.51 protocol version
+    host: HOST,
+    port: PORT,
+    username: USERNAME,
+    offline: true
+});
+
+client.on('connect', () => {
+    console.log('Connected to the Minecraft server!');
 });
 
 client.on('spawn', () => {
-    console.log('SUCCESS: MintBot_60 successfully spawned into mintsmp.net!');
+    console.log(`Successfully spawned as ${USERNAME}!`);
 });
 
 client.on('text', (packet) => {
-    console.log(`[Chat] ${packet.message}`);
+    console.log('[CHAT]', packet.message);
 });
 
 client.on('close', (reason) => {
-    console.log('Connection closed. Reason:', reason);
+    console.log('Connection closed.');
+    console.log('Reason:', reason);
 });
 
 client.on('error', (err) => {
-    console.log('Bot connection error:', err.message);
+    console.error('Minecraft error:', err);
 });
