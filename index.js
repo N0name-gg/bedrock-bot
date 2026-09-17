@@ -1,80 +1,87 @@
 const { createClient } = require('bedrock-protocol');
-const express = require('express');
 
-// Setup minimal web server to satisfy Railway's health checks and port bindings
-const app = express();
-const PORT = process.env.PORT || 3000;
+const HOST = 'mintsmp.net';
+const MC_PORT = 25125;
+const USERNAME = 'MintBot_60';
 
-app.get('/', (req, res) => {
-    res.send('Headless Bedrock Bot is active and running.');
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Web server listening on port ${PORT}`);
-});
-
-function startHeadlessBot() {
-    console.log('Initializing headless bot session for MintBot_60...');
+function startBot() {
+    console.log('');
+    console.log('==========================================');
+    console.log(`Starting ${USERNAME}`);
+    console.log(`Server: ${HOST}:${MC_PORT}`);
+    console.log('==========================================');
 
     const client = createClient({
-        host: 'mintsmp.net',
-        port: 25125,
+        host: HOST,
+        port: MC_PORT,
+
+        username: USERNAME,
+
+        // Microsoft/Xbox authentication
         offline: false,
-        raknetBackend: 'jsp-raknet',
-        version: '1.21.50',          // Matches protocol version 26.51 required by mintsmp.net
-        connectTimeout: 120000,      // Extended timeout for cloud handshakes
-        profilesFolder: './',        // Caches Microsoft auth tokens locally so you only log in once
+
+        // Keep the version you were successfully getting
+        // through the server ping.
+        version: '1.21.50',
+
+        // Give the connection plenty of time.
+        connectTimeout: 120000,
+
+        // Store Microsoft authentication data locally.
+        profilesFolder: './profiles',
+
+        // Show the Microsoft device-code login when required.
         onMsaCode: (data) => {
-            console.log('==================================================');
-            console.log('🔑 MICROSOFT LOGIN REQUIRED (FIRST RUN ONLY)');
-            console.log(`1. Open link: ${data.verification_uri}`);
-            console.log(`2. Enter code: ${data.user_code}`);
-            console.log('==================================================');
+            console.log('');
+            console.log('==========================================');
+            console.log('MICROSOFT LOGIN REQUIRED');
+            console.log('==========================================');
+            console.log(`Open: ${data.verification_uri}`);
+            console.log(`Code: ${data.user_code}`);
+            console.log('==========================================');
         }
     });
 
-    let idleLoop = null;
-
-    client.on('spawn', () => {
-        console.log('SUCCESS: MintBot_60 successfully spawned into the server!');
-
-        // Human-like idle behavior loop to prevent anti-cheat kicks
-        idleLoop = setInterval(() => {
-            try {
-                const randomYaw = Math.floor(Math.random() * 360);
-                const randomPitch = Math.floor(Math.random() * 30) - 15;
-
-                client.queue('move_player', {
-                    runtime_entity_id: 0n,
-                    position: { x: 0, y: 0, z: 0 },
-                    pitch: randomPitch,
-                    yaw: randomYaw,
-                    head_yaw: randomYaw,
-                    mode: 'normal',
-                    on_ground: true,
-                    ridden_runtime_id: 0n,
-                    tick: 0n
-                });
-            } catch (err) {
-                // Suppress minor packet race conditions during idle shifts
-            }
-        }, 20000); // Shifts head position every 20 seconds
+    client.on('connect', () => {
+        console.log('✅ RakNet connection established.');
     });
 
-    client.on('close', (reason) => {
-        console.log('Connection closed. Reason:', reason);
-        if (idleLoop) clearInterval(idleLoop);
-        console.log('Reconnecting in 15 seconds...');
-        setTimeout(startHeadlessBot, 15000);
+    client.on('session', () => {
+        console.log('✅ Authenticated session established.');
+    });
+
+    client.on('join', () => {
+        console.log('✅ Joined the Minecraft server.');
+    });
+
+    client.on('spawn', () => {
+        console.log('');
+        console.log('🎉🎉🎉 SUCCESS 🎉🎉🎉');
+        console.log(`${USERNAME} has spawned into MintSMP!`);
+        console.log('');
+    });
+
+    client.on('status', (status) => {
+        console.log('[STATUS]', status);
+    });
+
+    client.on('kick', (packet) => {
+        console.log('');
+        console.log('❌ SERVER KICK');
+        console.log(packet);
     });
 
     client.on('error', (err) => {
-        console.log('Bot network error:', err.message);
+        console.error('');
+        console.error('❌ CLIENT ERROR');
+        console.error(err);
+    });
+
+    client.on('close', (reason) => {
+        console.log('');
+        console.log('🔴 Connection closed.');
+        console.log('Reason:', reason);
     });
 }
 
-// Start the bot sequence
-startHeadlessBot();
-
-// Keep Node event loop active permanently
-setInterval(() => {}, 10000);
+startBot();
