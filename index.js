@@ -21,7 +21,7 @@ app.listen(PORT, '0.0.0.0', () => {
 // ==========================================
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintCompanion'; // Updated to look clean on the server
+const USERNAME = 'MintCompanion';
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 let mcClient = null;
@@ -66,12 +66,12 @@ discordClient.on('messageCreate', async (message) => {
             return message.reply('❌ Minecraft bot is offline. Try again later.');
         }
 
-        // Process the command
+        // Process the command/message routing cleanly
         const commandToSend = processCommand(fullArg);
         console.log(`[Sending to MC]: "${commandToSend}"`);
 
         try {
-            // Send message to Minecraft
+            // Send the exact text/command to Minecraft server chat
             mcClient.queue('text', {
                 type: 'chat',
                 needs_translation: false,
@@ -82,56 +82,38 @@ discordClient.on('messageCreate', async (message) => {
             });
 
             message.react('✅');
-            console.log(`✅ Message sent to server`);
+            console.log(`✅ Successfully processed: ${commandToSend}`);
 
         } catch (err) {
-            console.error('❌ Error:', err.message);
-            message.reply('❌ Failed to send command.');
+            console.error('❌ Error sending to MC:', err.message);
+            message.reply('❌ Failed to execute command in-game.');
             message.react('❌');
         }
     }
 });
 
 /**
- * Process commands and apply routing rules
+ * Process commands and apply precise routing rules without fallbacks
  */
 function processCommand(input) {
-    const lowerInput = input.toLowerCase();
+    const lowerInput = input.toLowerCase().trim();
 
-    // ========== CUSTOM COMMANDS ==========
-    
-    // !cmd welcome
+    // !cmd welcome -> custom chat greeting
     if (lowerInput === 'welcome') {
-        return 'welcome';
+        return 'Welcome to the server everyone!';
     }
     
-    // !cmd afk or !cmd /afk
-    if (lowerInput === 'afk' || lowerInput === '/afk') {
-        return '/afk';
-    }
-    
-    // !cmd home / !cmd home1 / !cmd /home1 etc.
-    if (lowerInput.startsWith('home') || lowerInput.startsWith('/home')) {
+    // !cmd afk, home, or shard pay -> ensure they have a leading slash
+    if (lowerInput === 'afk' || lowerInput.startsWith('home') || lowerInput.startsWith('shard pay')) {
         return input.startsWith('/') ? input : `/${input}`;
     }
-    
-    // !cmd /shard pay <player> <amount> or without slash
-    if (lowerInput.startsWith('/shard pay ')) {
-        return input;
-    }
-    
-    if (lowerInput.startsWith('shard pay ')) {
-        return `/${input}`;
-    }
 
-    // ========== DEFAULT CASES ==========
-    
-    // If it starts with / already, send as command
+    // If the user manually typed a slash command, pass it directly
     if (input.startsWith('/')) {
         return input;
     }
-    
-    // Otherwise send as chat message
+
+    // Otherwise, return normal text verbatim
     return input;
 }
 
@@ -161,7 +143,7 @@ function startBedrockBot() {
     });
 
     mcClient.on('spawn', () => {
-        console.log('\n✅ BOT SPAWNED - Ready to relay messages\n');
+        console.log('\n✅ BOT SPAWNED SUCCESSFULLY ON MINTSMP!\n');
     });
 
     mcClient.on('text', (packet) => {
@@ -178,8 +160,8 @@ function startBedrockBot() {
     });
 
     mcClient.on('error', (err) => {
-        // Suppress NBT tag errors - they don't affect chat
-        if (!err.message.includes('Invalid tag')) {
+        // Suppress harmless NBT block entity and packet noise errors
+        if (!err.message.includes('Invalid tag') && !err.message.includes('Read error for undefined')) {
             console.error('❌ Error:', err.message);
         }
     });
