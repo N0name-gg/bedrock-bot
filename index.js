@@ -2,15 +2,12 @@ const { createClient } = require('bedrock-protocol');
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
 
+// Keep Railway health check active so the container never shuts down
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-    res.send('MintBot and Discord bridge are running!');
-});
-
+app.get('/', (req, res) => res.send('MintBot and Discord bridge are running!'));
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('Web server listening on port ' + PORT);
+    console.log(`Web server listening on port ${PORT}`);
 });
 
 const HOST = 'mintsmp.net';
@@ -21,10 +18,7 @@ const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 let mcClient = null;
 
-// ==========================================
-// DISCORD BOT
-// ==========================================
-
+// --- Initialize Discord Bot ---
 const discordClient = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -33,66 +27,46 @@ const discordClient = new Client({
     ]
 });
 
-discordClient.once('clientReady', () => {
-    console.log('Discord bot logged in as ' + discordClient.user.tag + '!');
+discordClient.once('ready', () => {
+    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready for commands in any channel.`);
 });
 
 discordClient.on('messageCreate', async (message) => {
-
     if (message.author.bot) return;
 
-    if (!message.content.startsWith('!cmd ')) return;
+    // Checks if your message starts with !cmd in any channel
+    if (message.content.startsWith('!cmd ')) {
+        const commandOrText = message.content.slice(5).trim();
+        console.log(`[Discord Command Triggered]: "${commandOrText}"`);
 
-    const commandOrText = message.content.slice(5).trim();
+        if (!mcClient) {
+            return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
+        }
 
-    console.log('[Discord Command] ' + commandOrText);
+        try {
+            // Sends the command or chat message into the Minecraft server
+            mcClient.queue('text', {
+                type: 'chat',
+                needs_translation: false,
+                source_name: USERNAME,
+                xuid: '',
+                platform_chat_id: '',
+                message: commandOrText
+            });
 
-    if (!mcClient) {
-        await message.reply('Minecraft bot is currently offline or reconnecting.');
-        return;
+            message.react('✅');
+            console.log(`✅ Sent to Minecraft server: ${commandOrText}`);
+        } catch (err) {
+            console.error('Failed to send message to Minecraft:', err);
+            message.reply('❌ Failed to execute command in-game.');
+        }
     }
-
-    try {
-
-        mcClient.queue('text', {
-            type: 'chat',
-            needs_translation: false,
-            source_name: USERNAME,
-            xuid: '',
-            platform_chat_id: '',
-            message: commandOrText
-        });
-
-        await message.react('✅');
-
-        console.log('Sent to Minecraft: ' + commandOrText);
-
-    } catch (err) {
-
-        console.error('Failed to send message to Minecraft:', err);
-
-        await message.reply('Failed to send message to Minecraft.');
-
-    }
-
 });
 
-if (DISCORD_TOKEN) {
+discordClient.login(DISCORD_TOKEN);
 
-    discordClient.login(DISCORD_TOKEN);
-
-} else {
-
-    console.error('DISCORD_TOKEN is missing from Railway Variables!');
-
-}
-
-// ==========================================
-// MINECRAFT BEDROCK BOT
-// ==========================================
-
+// --- Initialize Minecraft Bedrock Bot ---
 function startBedrockBot() {
-
     console.log('Creating Bedrock client...');
 
     mcClient = createClient({
@@ -101,96 +75,39 @@ function startBedrockBot() {
         username: USERNAME,
         offline: false,
         connectTimeout: 120000,
-        profilesFolder: './',
-
+        profilesFolder: './', // Caches your Microsoft token locally so you don't re-login on restart
         onMsaCode: (data) => {
-
             console.log('==========================================');
-            console.log('MICROSOFT LOGIN REQUIRED');
+            console.log('🔑 MICROSOFT LOGIN REQUIRED');
             console.log('Open: ' + data.verification_uri);
             console.log('Code: ' + data.user_code);
             console.log('==========================================');
-
         }
     });
 
     mcClient.on('spawn', () => {
-
         console.log('==========================================');
         console.log('BOT SPAWNED SUCCESSFULLY ON MINTSMP!');
         console.log('==========================================');
-
     });
 
-    // ==========================================
-    // MINECRAFT CHAT -> DISCORD
-    // ==========================================
-
+    // Optional: Log in-game chat to console
     mcClient.on('text', (packet) => {
-
-        if (packet.type !== 'chat' && packet.type !== 'say') {
-            return;
+        if (packet.type === 'chat' || packet.type === 'say') {
+            console.log(`[In-Game] ${packet.source_name}: ${packet.message}`);
         }
-
-        const sender = packet.source_name || 'Server';
-
-        const cleanMessage =
-            '[In-Game] **' +
-            sender +
-            '**: ' +
-            packet.message;
-
-        console.log(cleanMessage);
-
-        discordClient.guilds.cache.forEach((guild) => {
-
-            guild.channels.cache.forEach((channel) => {
-
-                if (
-                    channel.isTextBased() &&
-                    !channel.isDMBased()
-                ) {
-
-                    channel.send(cleanMessage).catch(() => {});
-
-                }
-
-            });
-
-        });
-
     });
-
-    // ==========================================
-    // MINECRAFT CONNECTION CLOSED
-    // ==========================================
 
     mcClient.on('close', (reason) => {
-
         console.log('CONNECTION CLOSED:', reason);
-
         mcClient = null;
-
         console.log('Reconnecting in 15 seconds...');
-
         setTimeout(startBedrockBot, 15000);
-
     });
-
-    // ==========================================
-    // MINECRAFT ERROR
-    // ==========================================
 
     mcClient.on('error', (err) => {
-
         console.error('CLIENT ERROR:', err);
-
     });
-
 }
-
-// ==========================================
-// START MINECRAFT BOT
-// ==========================================
 
 startBedrockBot();
