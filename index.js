@@ -99,7 +99,7 @@ function processCommand(input) {
 
     // Custom shortcuts and routing rules
     if (lowerInput === 'welcome') {
-        return 'Welcome to the server everyone!';
+        return 'Welcome';
     } 
     else if (lowerInput === 'afk') {
         return '/afk';
