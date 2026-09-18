@@ -1,12 +1,14 @@
 {
-"name": "single-bedrock-bot",
-"version": "1.0.0",
-"description": "Single Bedrock Minecraft AFK bot",
-"main": "index.js",
-"scripts": {
-"start": "node index.js"
-},
-"dependencies": {
-"bedrock-protocol": "latest"
-}
+  "name": "single-bedrock-bot",
+  "version": "1.0.0",
+  "description": "Single Bedrock Minecraft AFK bot with Discord bridge",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bedrock-protocol": "latest",
+    "discord.js": "^14.14.1",
+    "express": "^4.19.2"
+  }
 }
