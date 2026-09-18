@@ -67,19 +67,12 @@ discordClient.on('messageCreate', async (message) => {
         try {
             console.log(`[Sending to MC]: "${commandToSend}"`);
 
-            // Send message to Minecraft server using write() method
-            mcClient.write('text', {
-                type: 'chat',
-                needs_translation: false,
-                source_name: USERNAME,
-                xuid: '',
-                platform_chat_id: '',
-                message: commandToSend
-            });
+            // Try to send the message using the most compatible method
+            sendMessageToMinecraft(commandToSend);
 
             // React with checkmark
             message.react('✅');
-            console.log(`✅ Successfully sent to Minecraft server`);
+            console.log(`✅ Successfully queued message to Minecraft server`);
 
         } catch (err) {
             console.error('❌ Failed to send message to Minecraft:', err.message);
@@ -99,27 +92,91 @@ function processCommand(input) {
 
     // Custom shortcuts and routing rules
     if (lowerInput === 'welcome') {
-        return 'Welcome';
+        return 'Welcome to the server everyone!';
     } 
     else if (lowerInput === 'afk') {
         return '/afk';
     } 
     else if (lowerInput.startsWith('shard pay ')) {
-        // Convert "shard pay Name 100" to "/shard pay Name 100"
         return `/${input}`;
     } 
     else if (lowerInput.startsWith('home')) {
-        // Convert "home1" to "/home1"
         return `/${input}`;
     }
     else if (lowerInput.startsWith('/')) {
-        // If it already starts with /, send as-is
         return input;
     }
     else {
-        // Default: send as regular chat message
         return input;
     }
+}
+
+/**
+ * Send message to Minecraft using the best available method
+ * @param {string} message - The message to send
+ */
+function sendMessageToMinecraft(message) {
+    // Method 1: Try using queue with text packet (most compatible)
+    try {
+        mcClient.queue('text', {
+            type: 'chat',
+            needs_translation: false,
+            source_name: USERNAME,
+            xuid: '',
+            platform_chat_id: '',
+            message: message
+        });
+        console.log('[Method 1] Using queue() - text packet');
+        return;
+    } catch (err) {
+        console.log('[Method 1 Failed]:', err.message);
+    }
+
+    // Method 2: Try using write with text packet
+    try {
+        mcClient.write('text', {
+            type: 'chat',
+            needs_translation: false,
+            source_name: USERNAME,
+            xuid: '',
+            platform_chat_id: '',
+            message: message
+        });
+        console.log('[Method 2] Using write() - text packet');
+        return;
+    } catch (err) {
+        console.log('[Method 2 Failed]:', err.message);
+    }
+
+    // Method 3: Try simplified chat packet
+    try {
+        mcClient.queue('chat', {
+            message: message
+        });
+        console.log('[Method 3] Using queue() - simplified chat packet');
+        return;
+    } catch (err) {
+        console.log('[Method 3 Failed]:', err.message);
+    }
+
+    // Method 4: Try command packet (for slash commands)
+    try {
+        if (message.startsWith('/')) {
+            mcClient.queue('command_request', {
+                command: message.substring(1),
+                version: 1,
+                origin: {
+                    type: 'player'
+                }
+            });
+            console.log('[Method 4] Using command_request packet');
+            return;
+        }
+    } catch (err) {
+        console.log('[Method 4 Failed]:', err.message);
+    }
+
+    console.error('❌ All message sending methods failed!');
 }
 
 discordClient.login(DISCORD_TOKEN);
