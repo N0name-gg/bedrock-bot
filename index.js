@@ -12,7 +12,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintBot_60';
+const USERNAME = 'MintCompanion'; // Changed to look completely normal!
 
 // Safely pulling your token from Railway variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
