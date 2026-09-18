@@ -14,10 +14,11 @@ const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
 const USERNAME = 'MintBot_60';
 
-// Use environment variables for safety, or fill them directly here
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN || 'YOUR_DISCORD_BOT_TOKEN';
-const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || 'YOUR_CHANNEL_ID';
+// Hardcoded channel ID from your screenshot to guarantee it matches instantly
+const DISCORD_CHANNEL_ID = '1550417730296094750'; // <-- Wait, let's inject your actual ID below or via env
+const DISCORD_TOKEN = process.env.MTU0NDMzMzg3NjQ4MTEwNTkzMA.G63Irz.ZSRmI8zsX4gtfMv-hBlknaMcvcROsNN_GKb0x0;
 
+let discordChannel = null;
 let mcClient = null;
 
 // --- Initialize Discord Bot ---
@@ -29,24 +30,31 @@ const discordClient = new Client({
     ]
 });
 
-discordClient.once('ready', () => {
+discordClient.once('ready', async () => {
     console.log(`Discord bot logged in as ${discordClient.user.tag}!`);
+    try {
+        // Fetch channel directly by ID from environment or fallback
+        const targetId = process.env.DISCORD_CHANNEL_ID || DISCORD_CHANNEL_ID;
+        discordChannel = await discordClient.channels.fetch(targetId);
+        console.log(`Successfully hooked into Discord channel: ${discordChannel.name}`);
+    } catch (err) {
+        console.error('Could not fetch Discord channel. Check your DISCORD_CHANNEL_ID!', err);
+    }
 });
 
 discordClient.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-    if (message.channel.id !== DISCORD_CHANNEL_ID) return;
+    if (!discordChannel || message.channel.id !== discordChannel.id) return;
 
-    // Check if message starts with !cmd
     if (message.content.startsWith('!cmd ')) {
-        const commandOrText = message.content.slice(5).trim(); // Remove '!cmd '
+        const commandOrText = message.content.slice(5).trim();
+        console.log(`[Discord Command Triggered]: "${commandOrText}"`);
 
         if (!mcClient) {
             return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
         }
 
         try {
-            // Sends either chat or command (e.g., /afk or /shard pay ...) to the game
             mcClient.queue('text', {
                 type: 'chat',
                 needs_translation: false,
@@ -57,7 +65,7 @@ discordClient.on('messageCreate', async (message) => {
             });
 
             message.react('✅');
-            console.log(`[Discord Command Executed]: ${commandOrText}`);
+            console.log(`✅ Sent to Minecraft server: ${commandOrText}`);
         } catch (err) {
             console.error('Failed to send message to Minecraft:', err);
             message.reply('❌ Failed to execute command in-game.');
@@ -77,7 +85,7 @@ function startBedrockBot() {
         username: USERNAME,
         offline: false,
         connectTimeout: 120000,
-        profilesFolder: './', // Keeps session cached
+        profilesFolder: './',
         onMsaCode: (data) => {
             console.log('==========================================');
             console.log('MICROSOFT LOGIN REQUIRED');
@@ -94,16 +102,20 @@ function startBedrockBot() {
     });
 
     mcClient.on('text', (packet) => {
-        // Optional: Relay in-game chat back to the Discord channel if desired
         if (packet.type === 'chat' || packet.type === 'say') {
-            console.log(`[In-Game Chat] ${packet.source_name}: ${packet.message}`);
+            const cleanMessage = `[In-Game] **${packet.source_name}**: ${packet.message}`;
+            console.log(cleanMessage);
+            
+            // Automatically mirror in-game chat straight into your Discord channel!
+            if (discordChannel) {
+                discordChannel.send(cleanMessage).catch(() => {});
+            }
         }
     });
 
     mcClient.on('close', (reason) => {
         console.log('CONNECTION CLOSED:', reason);
         mcClient = null;
-        console.log('Reconnecting in 15 seconds...');
         setTimeout(startBedrockBot, 15000);
     });
 
