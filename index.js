@@ -12,11 +12,9 @@ app.listen(PORT, '0.0.0.0', () => {
 
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintCompanion'; // Changed to look completely normal!
+const USERNAME = 'MintBot_60';
 
-// Safely pulling your token from Railway variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-
 let mcClient = null;
 
 // --- Initialize Discord Bot ---
@@ -29,37 +27,37 @@ const discordClient = new Client({
 });
 
 discordClient.once('ready', () => {
-    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready for commands in any channel.`);
+    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready to mirror chat.`);
 });
 
 discordClient.on('messageCreate', async (message) => {
+    // Ignore bot messages and empty messages
     if (message.author.bot) return;
+    if (!message.content.trim()) return;
 
-    // Triggers !cmd in ANY channel the bot can see
-    if (message.content.startsWith('!cmd ')) {
-        const commandOrText = message.content.slice(5).trim();
-        console.log(`[Discord Command Triggered]: "${commandOrText}"`);
+    const chatMessage = message.content.trim();
+    console.log(`[Discord Chat Triggered]: "${chatMessage}"`);
 
-        if (!mcClient) {
-            return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
-        }
+    if (!mcClient) {
+        return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
+    }
 
-        try {
-            mcClient.queue('text', {
-                type: 'chat',
-                needs_translation: false,
-                source_name: USERNAME,
-                xuid: '',
-                platform_chat_id: '',
-                message: commandOrText
-            });
+    try {
+        // Sends whatever you type in Discord straight into the game chat
+        mcClient.queue('text', {
+            type: 'chat',
+            needs_translation: false,
+            source_name: USERNAME,
+            xuid: '',
+            platform_chat_id: '',
+            message: chatMessage
+        });
 
-            message.react('✅');
-            console.log(`✅ Sent to Minecraft server: ${commandOrText}`);
-        } catch (err) {
-            console.error('Failed to send message to Minecraft:', err);
-            message.reply('❌ Failed to execute command in-game.');
-        }
+        message.react('✅');
+        console.log(`✅ Sent to Minecraft server: ${chatMessage}`);
+    } catch (err) {
+        console.error('Failed to send message to Minecraft:', err);
+        message.reply('❌ Failed to send message in-game.');
     }
 });
 
