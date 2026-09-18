@@ -14,11 +14,9 @@ const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
 const USERNAME = 'MintBot_60';
 
-// Safely pulling from Railway variables
+// Safely pulling your token from Railway variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const TARGET_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 
-let discordChannel = null;
 let mcClient = null;
 
 // --- Initialize Discord Bot ---
@@ -30,20 +28,14 @@ const discordClient = new Client({
     ]
 });
 
-discordClient.once('ready', async () => {
-    console.log(`Discord bot logged in as ${discordClient.user.tag}!`);
-    try {
-        discordChannel = await discordClient.channels.fetch(TARGET_CHANNEL_ID);
-        console.log(`Successfully hooked into Discord channel: ${discordChannel.name}`);
-    } catch (err) {
-        console.error('Could not fetch Discord channel. Check your DISCORD_CHANNEL_ID in Railway variables!', err);
-    }
+discordClient.once('ready', () => {
+    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready for commands in any channel.`);
 });
 
 discordClient.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-    if (!discordChannel || message.channel.id !== discordChannel.id) return;
 
+    // Triggers !cmd in ANY channel the bot can see
     if (message.content.startsWith('!cmd ')) {
         const commandOrText = message.content.slice(5).trim();
         console.log(`[Discord Command Triggered]: "${commandOrText}"`);
@@ -101,12 +93,7 @@ function startBedrockBot() {
 
     mcClient.on('text', (packet) => {
         if (packet.type === 'chat' || packet.type === 'say') {
-            const cleanMessage = `[In-Game] **${packet.source_name}**: ${packet.message}`;
-            console.log(cleanMessage);
-            
-            if (discordChannel) {
-                discordChannel.send(cleanMessage).catch(() => {});
-            }
+            console.log(`[In-Game] ${packet.source_name}: ${packet.message}`);
         }
     });
 
