@@ -21,7 +21,7 @@ app.listen(PORT, '0.0.0.0', () => {
 // ==========================================
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintCompanion';
+const USERNAME = 'welcome'; // Renamed username to welcome as requested
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 let mcClient = null;
@@ -39,39 +39,30 @@ const discordClient = new Client({
 
 discordClient.once('ready', () => {
     console.log(`✅ Discord bot logged in as ${discordClient.user.tag}`);
-    console.log('📝 Available Commands:');
-    console.log('    !cmd welcome');
-    console.log('    !cmd /afk');
-    console.log('    !cmd /home (or /home1, /home2, etc.)');
-    console.log('    !cmd /shard pay <player> <amount>');
-    console.log('    !cmd <any message>');
+    console.log('📝 Focused Mode: Shard Pay & General Commands Ready');
 });
 
 discordClient.on('messageCreate', async (message) => {
-    // Ignore bot messages
     if (message.author.bot) return;
 
-    // Check if message starts with !cmd
     if (message.content.startsWith('!cmd ')) {
         const fullArg = message.content.slice(5).trim();
         
         if (!fullArg) {
-            return message.reply('❌ Usage: `!cmd <message or command>`');
+            return message.reply('❌ Usage: `!cmd /shard pay <player> <amount>`');
         }
 
         console.log(`\n[Discord] ${message.author.username}: !cmd ${fullArg}`);
 
-        // Check if Minecraft bot is connected
         if (!mcClient) {
             return message.reply('❌ Minecraft bot is offline. Try again later.');
         }
 
-        // Process the command/message routing cleanly
-        const commandToSend = processCommand(fullArg);
+        // Dedicated processing for shard pay and commands
+        const commandToSend = processShardCommand(fullArg);
         console.log(`[Sending to MC]: "${commandToSend}"`);
 
         try {
-            // Send the exact text/command to Minecraft server chat
             mcClient.queue('text', {
                 type: 'chat',
                 needs_translation: false,
@@ -82,7 +73,7 @@ discordClient.on('messageCreate', async (message) => {
             });
 
             message.react('✅');
-            console.log(`✅ Successfully processed: ${commandToSend}`);
+            console.log(`✅ Successfully executed: ${commandToSend}`);
 
         } catch (err) {
             console.error('❌ Error sending to MC:', err.message);
@@ -93,28 +84,24 @@ discordClient.on('messageCreate', async (message) => {
 });
 
 /**
- * Process commands and apply precise routing rules without fallbacks
+ * Foolproof command parser focused entirely on shard pay and direct routing
  */
-function processCommand(input) {
-    const lowerInput = input.toLowerCase().trim();
+function processShardCommand(input) {
+    const cleanInput = input.trim();
+    const lowerInput = cleanInput.toLowerCase();
 
-    // !cmd welcome -> custom chat greeting
-    if (lowerInput === 'welcome') {
-        return 'Welcome to the server everyone!';
-    }
-    
-    // !cmd afk, home, or shard pay -> ensure they have a leading slash
-    if (lowerInput === 'afk' || lowerInput.startsWith('home') || lowerInput.startsWith('shard pay')) {
-        return input.startsWith('/') ? input : `/${input}`;
+    // If the user types shard pay (with or without leading slash)
+    if (lowerInput.startsWith('shard pay') || lowerInput.startsWith('/shard pay')) {
+        return cleanInput.startsWith('/') ? cleanInput : `/${cleanInput}`;
     }
 
-    // If the user manually typed a slash command, pass it directly
-    if (input.startsWith('/')) {
-        return input;
+    // If it's another command starting with a slash, pass it straight through
+    if (cleanInput.startsWith('/')) {
+        return cleanInput;
     }
 
-    // Otherwise, return normal text verbatim
-    return input;
+    // Default fallback pass-through
+    return cleanInput;
 }
 
 discordClient.login(DISCORD_TOKEN);
@@ -160,7 +147,6 @@ function startBedrockBot() {
     });
 
     mcClient.on('error', (err) => {
-        // Suppress harmless NBT block entity and packet noise errors
         if (!err.message.includes('Invalid tag') && !err.message.includes('Read error for undefined')) {
             console.error('❌ Error:', err.message);
         }
