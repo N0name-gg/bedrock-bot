@@ -3,13 +3,13 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
 
 // ==========================================
-// EXPRESS WEB SERVER
+// EXPRESS WEB SERVER (for Railway health check)
 // ==========================================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-    res.send('MintBot running!');
+    res.send('MintBot and Discord bridge are running!');
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -21,13 +21,13 @@ app.listen(PORT, '0.0.0.0', () => {
 // ==========================================
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintBot';
+const USERNAME = 'MintCompanion'; // Updated to look clean on the server
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 let mcClient = null;
 
 // ==========================================
-// DISCORD BOT
+// DISCORD BOT INITIALIZATION
 // ==========================================
 const discordClient = new Client({
     intents: [
@@ -39,137 +39,109 @@ const discordClient = new Client({
 
 discordClient.once('ready', () => {
     console.log(`✅ Discord bot logged in as ${discordClient.user.tag}`);
-    console.log('\n📝 Commands:');
-    console.log('  !cmd welcome');
-    console.log('  !cmd /afk');
-    console.log('  !cmd /home');
-    console.log('  !cmd /shard pay <player> <amount>\n');
+    console.log('📝 Available Commands:');
+    console.log('    !cmd welcome');
+    console.log('    !cmd /afk');
+    console.log('    !cmd /home (or /home1, /home2, etc.)');
+    console.log('    !cmd /shard pay <player> <amount>');
+    console.log('    !cmd <any message>');
 });
 
 discordClient.on('messageCreate', async (message) => {
+    // Ignore bot messages
     if (message.author.bot) return;
 
+    // Check if message starts with !cmd
     if (message.content.startsWith('!cmd ')) {
         const fullArg = message.content.slice(5).trim();
         
         if (!fullArg) {
-            return message.reply('❌ Usage: `!cmd <message>`');
+            return message.reply('❌ Usage: `!cmd <message or command>`');
         }
 
         console.log(`\n[Discord] ${message.author.username}: !cmd ${fullArg}`);
 
+        // Check if Minecraft bot is connected
         if (!mcClient) {
-            return message.reply('❌ Minecraft bot offline.');
+            return message.reply('❌ Minecraft bot is offline. Try again later.');
         }
 
+        // Process the command
         const commandToSend = processCommand(fullArg);
-        console.log(`[Processing]: "${commandToSend}"`);
+        console.log(`[Sending to MC]: "${commandToSend}"`);
 
         try {
-            sendToMinecraft(commandToSend);
+            // Send message to Minecraft
+            mcClient.queue('text', {
+                type: 'chat',
+                needs_translation: false,
+                source_name: USERNAME,
+                xuid: '',
+                platform_chat_id: '',
+                message: commandToSend
+            });
+
             message.react('✅');
-            console.log(`✅ Sent`);
+            console.log(`✅ Message sent to server`);
 
         } catch (err) {
             console.error('❌ Error:', err.message);
+            message.reply('❌ Failed to send command.');
             message.react('❌');
         }
     }
 });
 
+/**
+ * Process commands and apply routing rules
+ */
 function processCommand(input) {
     const lowerInput = input.toLowerCase();
 
-    if (lowerInput === 'welcome') return 'welcome';
-    if (lowerInput === '/afk') return '/afk';
-    if (lowerInput === '/home') return '/home';
-    if (lowerInput.startsWith('/shard pay ')) return input;
-    if (lowerInput.startsWith('shard pay ')) return `/${input}`;
-    if (input.startsWith('/')) return input;
+    // ========== CUSTOM COMMANDS ==========
     
+    // !cmd welcome
+    if (lowerInput === 'welcome') {
+        return 'welcome';
+    }
+    
+    // !cmd afk or !cmd /afk
+    if (lowerInput === 'afk' || lowerInput === '/afk') {
+        return '/afk';
+    }
+    
+    // !cmd home / !cmd home1 / !cmd /home1 etc.
+    if (lowerInput.startsWith('home') || lowerInput.startsWith('/home')) {
+        return input.startsWith('/') ? input : `/${input}`;
+    }
+    
+    // !cmd /shard pay <player> <amount> or without slash
+    if (lowerInput.startsWith('/shard pay ')) {
+        return input;
+    }
+    
+    if (lowerInput.startsWith('shard pay ')) {
+        return `/${input}`;
+    }
+
+    // ========== DEFAULT CASES ==========
+    
+    // If it starts with / already, send as command
+    if (input.startsWith('/')) {
+        return input;
+    }
+    
+    // Otherwise send as chat message
     return input;
-}
-
-function sendToMinecraft(message) {
-    console.log(`[Method Attempt] Trying to send: "${message}"`);
-
-    // METHOD 1: Standard text packet
-    try {
-        console.log('[Trying] text packet with queue');
-        mcClient.queue('text', {
-            type: 'chat',
-            needs_translation: false,
-            source_name: USERNAME,
-            xuid: '',
-            platform_chat_id: '',
-            message: message
-        });
-        console.log('[✓] Sent via text packet');
-        return;
-    } catch (e) {
-        console.log('[✗] Text packet failed:', e.message);
-    }
-
-    // METHOD 2: Direct write with text packet
-    try {
-        console.log('[Trying] text packet with write');
-        mcClient.write('text', {
-            type: 'chat',
-            needs_translation: false,
-            source_name: USERNAME,
-            message: message
-        });
-        console.log('[✓] Sent via write');
-        return;
-    } catch (e) {
-        console.log('[✗] Write failed:', e.message);
-    }
-
-    // METHOD 3: Command packet for commands starting with /
-    if (message.startsWith('/')) {
-        try {
-            console.log('[Trying] command_request packet');
-            mcClient.queue('command_request', {
-                command: message.substring(1),
-                version: 1,
-                origin: {
-                    type: 'player'
-                }
-            });
-            console.log('[✓] Sent via command_request');
-            return;
-        } catch (e) {
-            console.log('[✗] Command request failed:', e.message);
-        }
-    }
-
-    // METHOD 4: Try emote packet (some servers use this for chat)
-    try {
-        console.log('[Trying] emote packet');
-        mcClient.queue('emote', {
-            source_name: USERNAME,
-            emote_id: '',
-            flags: 0,
-            xuid: '',
-            platform_chat_id: '',
-            message: message
-        });
-        console.log('[✓] Sent via emote');
-        return;
-    } catch (e) {
-        console.log('[✗] Emote failed:', e.message);
-    }
-
-    console.error('[✗] All methods failed');
 }
 
 discordClient.login(DISCORD_TOKEN);
 
 // ==========================================
-// MINECRAFT BOT
+// MINECRAFT BEDROCK BOT
 // ==========================================
 function startBedrockBot() {
-    console.log('\n🎮 Connecting to Bedrock server...\n');
+    console.log('\n🎮 Creating Bedrock client...');
 
     mcClient = createClient({
         host: HOST,
@@ -179,40 +151,47 @@ function startBedrockBot() {
         connectTimeout: 120000,
         profilesFolder: './',
         onMsaCode: (data) => {
-            console.log('\n🔑 Login required at: ' + data.verification_uri);
-            console.log('Code: ' + data.user_code + '\n');
+            console.log('\n==========================================');
+            console.log('🔑 MICROSOFT LOGIN REQUIRED');
+            console.log('==========================================');
+            console.log('Open: ' + data.verification_uri);
+            console.log('User Code: ' + data.user_code);
+            console.log('==========================================\n');
         }
     });
 
     mcClient.on('spawn', () => {
-        console.log('✅ Bot spawned! Ready to relay Discord messages.\n');
+        console.log('\n✅ BOT SPAWNED - Ready to relay messages\n');
     });
 
     mcClient.on('text', (packet) => {
         if (packet.type === 'chat' || packet.type === 'say') {
-            console.log(`[Chat] ${packet.source_name}: ${packet.message}`);
+            console.log(`[In-Game] ${packet.source_name}: ${packet.message}`);
         }
     });
 
-    mcClient.on('close', () => {
-        console.log('\n❌ Disconnected');
+    mcClient.on('close', (reason) => {
+        console.log(`\n❌ Disconnected: ${reason}`);
         mcClient = null;
         console.log('🔄 Reconnecting in 15 seconds...\n');
         setTimeout(startBedrockBot, 15000);
     });
 
     mcClient.on('error', (err) => {
-        // Suppress NBT errors
-        if (!err.message.includes('Invalid tag') && !err.message.includes('block_entity')) {
-            console.error('Error:', err.message);
+        // Suppress NBT tag errors - they don't affect chat
+        if (!err.message.includes('Invalid tag')) {
+            console.error('❌ Error:', err.message);
         }
     });
 }
 
 startBedrockBot();
 
+// ==========================================
+// GRACEFUL SHUTDOWN
+// ==========================================
 process.on('SIGINT', () => {
-    console.log('\n👋 Shutting down');
+    console.log('\n👋 Shutting down...');
     if (mcClient) mcClient.close();
     discordClient.destroy();
     process.exit(0);
