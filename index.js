@@ -12,7 +12,7 @@ app.listen(PORT, '0.0.0.0', () => {
 
 const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
-const USERNAME = 'MintBot_60';
+const USERNAME = 'hello';
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 let mcClient = null;
@@ -27,37 +27,53 @@ const discordClient = new Client({
 });
 
 discordClient.once('ready', () => {
-    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready to mirror chat.`);
+    console.log(`Discord bot logged in as ${discordClient.user.tag}! Ready for custom commands.`);
 });
 
 discordClient.on('messageCreate', async (message) => {
-    // Ignore bot messages and empty messages
     if (message.author.bot) return;
-    if (!message.content.trim()) return;
 
-    const chatMessage = message.content.trim();
-    console.log(`[Discord Chat Triggered]: "${chatMessage}"`);
+    // Checks if your message starts with !cmd
+    if (message.content.startsWith('!cmd ')) {
+        const fullArg = message.content.slice(5).trim();
+        console.log(`[Discord Command Triggered]: "${fullArg}"`);
 
-    if (!mcClient) {
-        return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
-    }
+        if (!mcClient) {
+            return message.reply('❌ Minecraft bot is currently offline or reconnecting.');
+        }
 
-    try {
-        // Sends whatever you type in Discord straight into the game chat
-        mcClient.queue('text', {
-            type: 'chat',
-            needs_translation: false,
-            source_name: USERNAME,
-            xuid: '',
-            platform_chat_id: '',
-            message: chatMessage
-        });
+        let commandToSend = fullArg;
 
-        message.react('✅');
-        console.log(`✅ Sent to Minecraft server: ${chatMessage}`);
-    } catch (err) {
-        console.error('Failed to send message to Minecraft:', err);
-        message.reply('❌ Failed to send message in-game.');
+        // Custom routing rules for your shortcuts
+        if (fullArg.toLowerCase() === 'welcome') {
+            commandToSend = 'Welcome to the server everyone!';
+        } else if (fullArg.toLowerCase() === 'afk') {
+            commandToSend = '/afk';
+        } else if (fullArg.toLowerCase().startsWith('shard pay')) {
+            // e.g. !cmd shard pay Name 100 becomes /shard pay Name 100
+            commandToSend = `/${fullArg}`;
+        } else if (fullArg.toLowerCase().startsWith('home')) {
+            // e.g. !cmd home1 becomes /home1
+            commandToSend = `/${fullArg}`;
+        }
+
+        try {
+            // Sends the final formatted command/text into the Minecraft server
+            mcClient.queue('text', {
+                type: 'chat',
+                needs_translation: false,
+                source_name: USERNAME,
+                xuid: '',
+                platform_chat_id: '',
+                message: commandToSend
+            });
+
+            message.react('✅');
+            console.log(`✅ Sent to Minecraft server: ${commandToSend}`);
+        } catch (err) {
+            console.error('Failed to send message to Minecraft:', err);
+            message.reply('❌ Failed to execute command in-game.');
+        }
     }
 });
 
