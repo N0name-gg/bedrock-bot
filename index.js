@@ -14,10 +14,11 @@ const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
 const USERNAME = 'MintBot_60';
 
-// DISCORD_TOKEN pulls safely from Railway variables.
-// TARGET_CHANNEL_ID uses your railway variable first, with your fallback channel ID string as a safeguard.
+// DISCORD_TOKEN pulls from Railway variables.
+// TARGET_CHANNEL_ID is hardcoded right here so it never fails! 
+// REPLACE 'YOUR_CHANNEL_ID_HERE' with your actual channel numbers (keep the quotes).
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const TARGET_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || '1550417730296094750'; // <-- Replace with your actual #bot-controls channel ID if needed
+const TARGET_CHANNEL_ID = '1550417730296094750'; 
 
 let discordChannel = null;
 let mcClient = null;
@@ -37,7 +38,7 @@ discordClient.once('ready', async () => {
         discordChannel = await discordClient.channels.fetch(TARGET_CHANNEL_ID);
         console.log(`Successfully hooked into Discord channel: ${discordChannel.name}`);
     } catch (err) {
-        console.error('Could not fetch Discord channel. Check your channel ID or bot permissions!', err);
+        console.error('Could not fetch Discord channel. Check your hardcoded channel ID or bot permissions!', err);
     }
 });
 
