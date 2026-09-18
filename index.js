@@ -14,7 +14,8 @@ const HOST = 'mintsmp.net';
 const MC_PORT = 25125;
 const USERNAME = 'MintBot_60';
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+// PASTE YOUR DISCORD BOT TOKEN INSIDE THE QUOTES BELOW:
+const DISCORD_TOKEN = 'MTU0NDMzMzg3NjQ4MTEwNTkzMA.G63Irz.ZSRmI8zsX4gtfMv-hBlknaMcvcROsNN_GKb0x0';
 
 let mcClient = null;
 
