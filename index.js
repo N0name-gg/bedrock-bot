@@ -321,11 +321,19 @@ discordClient.on('messageCreate', (message) => {
 
   const args = message.content.split(' ');
   if (args.length < 3) {
-    return message.reply('❌ Invalid format. Use: `!cmd <1-9> <command/chat>` or `!cmd all <command/chat>`');
+    return message.reply('❌ Invalid format. Use: `!cmd <1-9> <command>` or `!cmd all <command>`');
   }
 
   const targetId = args[1].toLowerCase();
-  const contentText = args.slice(2).join(' ');
+  let contentText = args.slice(2).join(' ').trim();
+
+  // Smart command normalizer for /home with spaces (e.g. "home 1" -> "/home 1")
+  const lowerContent = contentText.toLowerCase();
+  if (lowerContent.startsWith('home ') || lowerContent === 'home') {
+    contentText = contentText.startsWith('/') ? contentText : `/${contentText}`;
+  } else if (!contentText.startsWith('/')) {
+    contentText = `/${contentText}`;
+  }
 
   // Unified Packet Sender utilizing the working command_request payload
   function sendToGame(botClient, text) {
@@ -366,5 +374,4 @@ discordClient.on('messageCreate', (message) => {
   }
 });
 
-// Make sure to replace this token with your active Discord bot token
-discordClient.login(process.env.DISCORD_TOKEN || 'YOUR_DISCORD_TOKEN_HERE');
+discordClient.login(process.env.DISCORD_TOKEN);
