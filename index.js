@@ -37,12 +37,13 @@ botsConfig.forEach(cfg => {
 const activeBots = {};          // Stores active client instances
 const botSpawned = {};          // Tracks if the bot actually reached the 'spawn' event
 const botEnabled = {};          // Tracks if a bot is authorized to run (true/false)
+const botLoginData = {};        // Stores active Microsoft MSA verification URIs and user codes per bot
 
 let currentHost = 'mintsmp.net';
 let currentPort = 25125;
 
 // ==========================================
-// HTML DASHBOARD INTERFACE
+// HTML DASHBOARD INTERFACE (with Embedded Login Boxes)
 // ==========================================
 app.get('/', (req, res) => {
   res.send(`
@@ -57,22 +58,27 @@ app.get('/', (req, res) => {
         .config-bar { background: #1e293b; padding: 12px; border-radius: 8px; width: 500px; margin: 15px auto; display: flex; justify-content: space-around; }
         .config-bar input { background: #0f172a; border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; }
         .global-btns { margin: 15px 0; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 1000px; margin: 0 auto; }
-        .card { background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 1050px; margin: 0 auto; }
+        .card { background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-between; }
         .card h3 { margin-top: 0; margin-bottom: 5px; color: #f8fafc; font-size: 16px; }
-        .card p { margin: 4px 0 12px 0; font-size: 12px; color: #94a3b8; word-break: break-all; }
+        .card p { margin: 4px 0 8px 0; font-size: 12px; color: #94a3b8; word-break: break-all; }
+        .login-box { background: #0f172a; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #38bdf8; font-size: 12px; }
+        .login-box a { color: #38bdf8; font-weight: bold; text-decoration: underline; }
+        .login-code { color: #f43f5e; font-size: 15px; font-weight: bold; background: #1e293b; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
         button { padding: 8px 14px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; }
-        .btn-connect { background: #22c55e; color: white; }
-        .btn-disconnect { background: #ef4444; color: white; }
+        .btn-connect { background: #22c55e; color: white; flex: 1; }
+        .btn-disconnect { background: #ef4444; color: white; flex: 1; }
+        .btn-row { display: flex; gap: 8px; margin-top: 10px; }
         .btn-global-connect { background: #16a34a; color: white; padding: 10px 20px; font-size: 14px; margin-right: 10px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; }
         .btn-global-disconnect { background: #dc2626; color: white; padding: 10px 20px; font-size: 14px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; }
         .status-online { color: #22c55e; font-weight: bold; }
         .status-offline { color: #ef4444; font-weight: bold; }
+        .status-awaiting { color: #f59e0b; font-weight: bold; }
       </style>
     </head>
     <body>
       <h1>MintSMP Multi-Bot Dashboard</h1>
-      <p style="color: #94a3b8;">Managing 9 Isolated Bedrock Accounts (Sequential 6s Loop Reconnect)</p>
+      <p style="color: #94a3b8;">Managing 9 Isolated Bedrock Accounts with Direct Login Links</p>
 
       <div class="config-bar">
         <div>Server IP: <input type="text" id="serverIp" value="mintsmp.net"></div>
@@ -88,34 +94,46 @@ app.get('/', (req, res) => {
 
       <script>
         const bots = ${JSON.stringify(botsConfig)};
-        function renderBots() {
-          const grid = document.getElementById('botGrid');
-          grid.innerHTML = '';
-          bots.forEach(bot => {
-            grid.innerHTML += \`
-              <div class="card">
-                <h3>Bot \${bot.id}</h3>
-                <p>\${bot.username} <br>Status: <span id="status-\${bot.id}" class="status-offline">Offline</span></p>
-                <button class="btn-connect" onclick="botAction(\${bot.id}, 'connect')">Connect</button>
-                <button class="btn-disconnect" onclick="botAction(\${bot.id}, 'disconnect')">Disconnect</button>
-              </div>
-            \`;
-          });
-        }
-
+        
         async function fetchStatus() {
           try {
             const res = await fetch('/status');
             const data = await res.json();
+            
+            const grid = document.getElementById('botGrid');
+            grid.innerHTML = '';
+            
             bots.forEach(bot => {
-              const el = document.getElementById(\`status-\${bot.id}\`);
-              if (data[bot.id]) {
-                el.innerText = 'Online';
-                el.className = 'status-online';
-              } else {
-                el.innerText = 'Offline';
-                el.className = 'status-offline';
+              const info = data[bot.id] || { status: 'Offline', verification_uri: null, user_code: null };
+              
+              let statusClass = 'status-offline';
+              if (info.status === 'Online') statusClass = 'status-online';
+              else if (info.status === 'Awaiting Login') statusClass = 'status-awaiting';
+
+              let loginHtml = '';
+              if (info.user_code && info.verification_uri) {
+                loginHtml = \`
+                  <div class="login-box">
+                    🔑 <b>Login Required:</b><br>
+                    🔗 <a href="\${info.verification_uri}" target="_blank">Open Microsoft Link</a><br>
+                    Code: <span class="login-code">\${info.user_code}</span>
+                  </div>
+                \`;
               }
+
+              grid.innerHTML += \`
+                <div class="card">
+                  <div>
+                    <h3>Bot \${bot.id}</h3>
+                    <p>\${bot.username} <br>Status: <span class="\${statusClass}">\${info.status}</span></p>
+                    \${loginHtml}
+                  </div>
+                  <div class="btn-row">
+                    <button class="btn-connect" onclick="botAction(\${bot.id}, 'connect')">Connect</button>
+                    <button class="btn-disconnect" onclick="botAction(\${bot.id}, 'disconnect')">Disconnect</button>
+                  </div>
+                </div>
+              \`;
             });
           } catch(e) {}
         }
@@ -142,8 +160,8 @@ app.get('/', (req, res) => {
           fetchStatus();
         }
 
-        renderBots();
-        setInterval(fetchStatus, 3000);
+        fetchStatus();
+        setInterval(fetchStatus, 3000); // Auto-refresh status & login links every 3 seconds
       </script>
     </body>
     </html>
@@ -153,7 +171,20 @@ app.get('/', (req, res) => {
 app.get('/status', (req, res) => {
   const status = {};
   botsConfig.forEach(bot => {
-    status[bot.id] = !!botSpawned[bot.id];
+    let stat = 'Offline';
+    if (botSpawned[bot.id]) {
+      stat = 'Online';
+    } else if (botLoginData[bot.id]) {
+      stat = 'Awaiting Login';
+    } else if (activeBots[bot.id]) {
+      stat = 'Connecting...';
+    }
+
+    status[bot.id] = {
+      status: stat,
+      verification_uri: botLoginData[bot.id]?.verification_uri || null,
+      user_code: botLoginData[bot.id]?.user_code || null
+    };
   });
   res.json(status);
 });
@@ -166,6 +197,7 @@ function cleanupBot(id) {
     delete activeBots[id];
   }
   botSpawned[id] = false;
+  delete botLoginData[id];
 }
 
 function startBot(botInfo, host, port) {
@@ -176,6 +208,7 @@ function startBot(botInfo, host, port) {
   currentPort = parseInt(port) || currentPort;
 
   botSpawned[id] = false;
+  botLoginData[id] = null;
   console.log(`🚀 Connecting Bot ${id} (${botInfo.username})...`);
 
   try {
@@ -187,6 +220,7 @@ function startBot(botInfo, host, port) {
       connectTimeout: 120000,
       profilesFolder: botInfo.folder,
       onMsaCode: (data) => {
+        botLoginData[id] = data;
         console.log(`\n=== MICROSOFT LOGIN FOR BOT ${id} (${botInfo.username}) ===`);
         console.log(`🔗 Link: ${data.verification_uri}`);
         console.log(`🔢 Code: ${data.user_code}`);
@@ -199,6 +233,7 @@ function startBot(botInfo, host, port) {
     client.on('spawn', () => {
       console.log(`✅ Bot ${id} (${botInfo.username}) spawned successfully!`);
       botSpawned[id] = true;
+      botLoginData[id] = null; // Clear login prompt once successfully authenticated & spawned
     });
 
     client.on('error', (err) => {
@@ -227,7 +262,7 @@ async function runAutoConnectLoop() {
       const id = botInfo.id;
 
       if (botEnabled[id]) {
-        if (!botSpawned[id] && !activeBots[id]) {
+        if (!botSpawned[id] && !activeBots[id] && !botLoginData[id]) {
           console.log(`🔄 [Loop] Bot ${id} is offline. Reconnecting...`);
           startBot(botInfo, currentHost, currentPort);
         }
@@ -327,7 +362,7 @@ discordClient.on('messageCreate', (message) => {
   const targetId = args[1].toLowerCase();
   let contentText = args.slice(2).join(' ').trim();
 
-  // Smart command normalizer for /home with spaces (e.g. "home 1" -> "/home 1")
+  // Smart command normalizer for /home with spaces and auto-slashing
   const lowerContent = contentText.toLowerCase();
   if (lowerContent.startsWith('home ') || lowerContent === 'home') {
     contentText = contentText.startsWith('/') ? contentText : `/${contentText}`;
@@ -335,7 +370,6 @@ discordClient.on('messageCreate', (message) => {
     contentText = `/${contentText}`;
   }
 
-  // Unified Packet Sender utilizing the working command_request payload
   function sendToGame(botClient, text) {
     botClient.queue('command_request', {
       command: text,
@@ -350,7 +384,6 @@ discordClient.on('messageCreate', (message) => {
     });
   }
 
-  // Broadcast to all active bots
   if (targetId === 'all') {
     let count = 0;
     for (const [id, botClient] of Object.entries(activeBots)) {
@@ -362,7 +395,6 @@ discordClient.on('messageCreate', (message) => {
     return message.reply(`✅ Broadcasted \`${contentText}\` to ${count} active bots.`);
   }
 
-  // Command a single bot (1 through 9)
   const botId = parseInt(targetId);
   const targetBot = activeBots[botId];
 
