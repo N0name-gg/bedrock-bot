@@ -43,7 +43,7 @@ let currentHost = 'mintsmp.net';
 let currentPort = 25125;
 
 // ==========================================
-// HTML DASHBOARD INTERFACE (with Animated Live Mesh Gradient Background)
+// HTML DASHBOARD INTERFACE (Figma-Style Animated Mesh Gradient)
 // ==========================================
 app.get('/', (req, res) => {
   res.send(`
@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>MintSMP Multi-Bot Dashboard</title>
+      <title>MintSMP 1 Trillion Dollar Command Center</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
 
@@ -63,10 +63,10 @@ app.get('/', (req, res) => {
           text-align: center;
           min-height: 100vh;
           overflow-x: hidden;
-          background-color: #0b0f19;
+          background-color: #080c14;
         }
 
-        /* Dynamic Live Moving Mesh Gradient Background */
+        /* Live Animated Figma-Style Mesh Gradient Background */
         .mesh-bg {
           position: fixed;
           top: 0;
@@ -74,149 +74,146 @@ app.get('/', (req, res) => {
           width: 100vw;
           height: 100vh;
           z-index: -1;
-          background-color: #0b0f19;
+          background-color: #080c14;
           overflow: hidden;
         }
 
         .blob {
           position: absolute;
-          filter: blur(80px);
-          opacity: 0.65;
-          animation: floatBlob 12s ease-in-out infinite alternate;
+          filter: blur(90px);
+          opacity: 0.6;
+          animation: floatBlob 14s ease-in-out infinite alternate;
         }
 
         .blob-1 {
-          width: 450px;
-          height: 450px;
+          width: 550px;
+          height: 550px;
           background: #38bdf8;
-          top: -10%;
+          top: -15%;
           left: -10%;
-          animation-duration: 14s;
+          animation-duration: 16s;
         }
 
         .blob-2 {
-          width: 500px;
-          height: 500px;
+          width: 600px;
+          height: 600px;
           background: #f43f5e;
-          bottom: -15%;
+          bottom: -20%;
           right: -10%;
-          animation-duration: 18s;
-          animation-delay: -3s;
+          animation-duration: 20s;
+          animation-delay: -4s;
         }
 
         .blob-3 {
-          width: 400px;
-          height: 400px;
-          background: #facc15;
-          top: 30%;
-          left: 35%;
-          animation-duration: 10s;
-          animation-delay: -5s;
-          opacity: 0.45;
+          width: 450px;
+          height: 450px;
+          background: #10b981;
+          top: 25%;
+          left: 40%;
+          animation-duration: 12s;
+          animation-delay: -2s;
+          opacity: 0.5;
         }
 
         @keyframes floatBlob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          50% {
-            transform: translate(80px, 60px) scale(1.15);
-          }
-          100% {
-            transform: translate(-60px, -40px) scale(0.9);
-          }
+          0% { transform: translate(0px, 0px) scale(1); }
+          50% { transform: translate(90px, 70px) scale(1.2); }
+          100% { transform: translate(-70px, -50px) scale(0.85); }
         }
 
         h1 {
           color: #f8fafc;
           font-weight: 800;
-          font-size: 2.5rem;
+          font-size: 2.8rem;
           margin-bottom: 5px;
-          text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+          text-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+          letter-spacing: -0.5px;
         }
 
         p.subtitle {
           color: #94a3b8;
-          font-size: 1rem;
-          margin-bottom: 25px;
+          font-size: 1.05rem;
+          margin-bottom: 30px;
         }
 
         .config-bar {
-          background: rgba(30, 41, 59, 0.65);
-          backdrop-filter: blur(12px);
-          padding: 14px;
-          border-radius: 12px;
-          width: 450px;
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(16px);
+          padding: 14px 24px;
+          border-radius: 14px;
+          width: 420px;
           margin: 0 auto 20px auto;
           display: flex;
           justify-content: space-around;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
 
         .config-bar input {
-          background: #0f172a;
+          background: rgba(15, 23, 42, 0.8);
           border: 1px solid #475569;
-          color: #fff;
+          color: #38bdf8;
           padding: 6px 12px;
-          border-radius: 6px;
+          border-radius: 8px;
           font-weight: 600;
           outline: none;
+          width: 130px;
+          text-align: center;
         }
 
         .global-btns {
-          margin: 15px 0 30px 0;
+          margin: 20px 0 35px 0;
         }
 
         .grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 20px;
-          max-width: 1100px;
+          max-width: 1150px;
           margin: 0 auto;
         }
 
         .card {
-          background: rgba(30, 41, 59, 0.7);
-          backdrop-filter: blur(12px);
-          padding: 20px;
-          border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(30, 41, 59, 0.6);
+          backdrop-filter: blur(16px);
+          padding: 22px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           text-align: left;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.4);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
 
         .card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 15px 35px rgba(56, 189, 248, 0.2);
-          border-color: rgba(56, 189, 248, 0.4);
+          transform: translateY(-5px);
+          box-shadow: 0 20px 40px rgba(56, 189, 248, 0.25);
+          border-color: rgba(56, 189, 248, 0.5);
         }
 
         .card h3 {
           margin-top: 0;
-          margin-bottom: 5px;
+          margin-bottom: 6px;
           color: #f8fafc;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
         }
 
         .card p {
-          margin: 6px 0 8px 0;
-          font-size: 0.8rem;
+          margin: 6px 0 10px 0;
+          font-size: 0.82rem;
           color: #94a3b8;
           word-break: break-all;
         }
 
         .login-box {
           background: rgba(15, 23, 42, 0.85);
-          padding: 10px;
-          margin: 10px 0;
-          border-radius: 8px;
+          padding: 12px;
+          margin: 12px 0;
+          border-radius: 10px;
           border: 1px solid #38bdf8;
-          font-size: 0.75rem;
+          font-size: 0.78rem;
         }
 
         .login-box a {
@@ -227,27 +224,28 @@ app.get('/', (req, res) => {
 
         .login-code {
           color: #f43f5e;
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: bold;
           background: #1e293b;
-          padding: 2px 6px;
-          border-radius: 4px;
+          padding: 2px 8px;
+          border-radius: 6px;
           display: inline-block;
-          margin-top: 4px;
+          margin-top: 6px;
+          letter-spacing: 1px;
         }
 
         button {
-          padding: 10px 14px;
+          padding: 10px 16px;
           cursor: pointer;
           border: none;
-          border-radius: 8px;
+          border-radius: 10px;
           font-weight: 600;
           font-size: 0.85rem;
           transition: filter 0.2s, transform 0.1s;
         }
 
         button:active {
-          transform: scale(0.96);
+          transform: scale(0.95);
         }
 
         .btn-connect { background: #22c55e; color: white; flex: 1; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
@@ -261,10 +259,10 @@ app.get('/', (req, res) => {
         .btn-global-connect {
           background: linear-gradient(135deg, #22c55e, #16a34a);
           color: white;
-          padding: 12px 24px;
+          padding: 12px 26px;
           font-size: 0.95rem;
           margin-right: 12px;
-          border-radius: 8px;
+          border-radius: 10px;
           border: none;
           font-weight: 600;
           box-shadow: 0 6px 20px rgba(34,197,94,0.4);
@@ -273,9 +271,9 @@ app.get('/', (req, res) => {
         .btn-global-disconnect {
           background: linear-gradient(135deg, #ef4444, #dc2626);
           color: white;
-          padding: 12px 24px;
+          padding: 12px 26px;
           font-size: 0.95rem;
-          border-radius: 8px;
+          border-radius: 10px;
           border: none;
           font-weight: 600;
           box-shadow: 0 6px 20px rgba(239,68,68,0.4);
@@ -295,7 +293,7 @@ app.get('/', (req, res) => {
       </div>
 
       <h1>⚡ MintSMP Multi-Bot Dashboard</h1>
-      <p class="subtitle">Managing 9 Accounts (hyper.eagle50 - hyper.eagle58)</p>
+      <p class="subtitle">Managing 9 Enterprise Accounts (hyper.eagle50 - hyper.eagle58)</p>
 
       <div class="config-bar">
         <div>Server IP: <input type="text" id="serverIp" value="mintsmp.net"></div>
@@ -628,7 +626,7 @@ discordClient.on('messageCreate', (message) => {
 
   if (targetBot && botSpawned[botId]) {
     sendToGame(targetBot, contentText);
-    message.reply(`✅ Executed \`${contentText}\` on Bot ${botId}.` );
+    message.reply(`✅ Executed \`${contentText}\` on Bot ${botId}.`);
   } else {
     message.reply(`❌ Bot ${botId} is either offline or hasn't fully spawned into the world yet.`);
   }
