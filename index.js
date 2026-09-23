@@ -43,7 +43,7 @@ let currentHost = 'mintsmp.net';
 let currentPort = 25125;
 
 // ==========================================
-// HTML DASHBOARD INTERFACE (with Animated Mountain & River Background)
+// HTML DASHBOARD INTERFACE (with Animated Live Mesh Gradient Background)
 // ==========================================
 app.get('/', (req, res) => {
   res.send(`
@@ -57,126 +57,131 @@ app.get('/', (req, res) => {
 
         body {
           margin: 0;
-          padding: 20px;
+          padding: 30px;
           font-family: 'Poppins', sans-serif;
           color: #fff;
           text-align: center;
           min-height: 100vh;
           overflow-x: hidden;
-          background: #0f172a;
+          background-color: #0b0f19;
         }
 
-        /* Animated Mountain & Flowing River Background */
-        .scenery-bg {
+        /* Dynamic Live Moving Mesh Gradient Background */
+        .mesh-bg {
           position: fixed;
           top: 0;
           left: 0;
           width: 100vw;
           height: 100vh;
           z-index: -1;
-          background: linear-gradient(to bottom, #1e293b, #0f172a);
+          background-color: #0b0f19;
           overflow: hidden;
         }
 
-        /* Mountain Silhouette Layer */
-        .mountains {
+        .blob {
           position: absolute;
-          bottom: 30%;
-          left: 0;
-          width: 200%;
-          height: 40vh;
-          background: linear-gradient(135deg, #334155 25%, #1e293b 50%, #0f172a 100%);
-          clip-path: polygon(0% 100%, 10% 60%, 25% 85%, 40% 40%, 60% 90%, 75% 50%, 90% 80%, 100% 45%, 100% 100%);
-          opacity: 0.6;
+          filter: blur(80px);
+          opacity: 0.65;
+          animation: floatBlob 12s ease-in-out infinite alternate;
         }
 
-        /* Flowing River Layer with Shimmer Effect */
-        .river {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 35vh;
-          background: linear-gradient(to bottom, #0284c7, #0369a1, #0f172a);
-          overflow: hidden;
+        .blob-1 {
+          width: 450px;
+          height: 450px;
+          background: #38bdf8;
+          top: -10%;
+          left: -10%;
+          animation-duration: 14s;
         }
 
-        .river::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -50%;
-          width: 200%;
-          height: 100%;
-          background: repeating-linear-gradient(
-            45deg,
-            rgba(255, 255, 255, 0.05) 0px,
-            rgba(255, 255, 255, 0.05) 20px,
-            transparent 20px,
-            transparent 40px
-          );
-          animation: flowRiver 6s linear infinite;
+        .blob-2 {
+          width: 500px;
+          height: 500px;
+          background: #f43f5e;
+          bottom: -15%;
+          right: -10%;
+          animation-duration: 18s;
+          animation-delay: -3s;
         }
 
-        @keyframes flowRiver {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(50px); }
+        .blob-3 {
+          width: 400px;
+          height: 400px;
+          background: #facc15;
+          top: 30%;
+          left: 35%;
+          animation-duration: 10s;
+          animation-delay: -5s;
+          opacity: 0.45;
+        }
+
+        @keyframes floatBlob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          50% {
+            transform: translate(80px, 60px) scale(1.15);
+          }
+          100% {
+            transform: translate(-60px, -40px) scale(0.9);
+          }
         }
 
         h1 {
-          color: #38bdf8;
+          color: #f8fafc;
           font-weight: 800;
-          font-size: 2.2rem;
+          font-size: 2.5rem;
           margin-bottom: 5px;
-          text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+          text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
         }
 
         p.subtitle {
-          color: #cbd5e1;
-          font-size: 0.95rem;
-          margin-bottom: 20px;
+          color: #94a3b8;
+          font-size: 1rem;
+          margin-bottom: 25px;
         }
 
         .config-bar {
-          background: rgba(30, 41, 59, 0.85);
-          backdrop-filter: blur(8px);
-          padding: 12px;
-          border-radius: 10px;
+          background: rgba(30, 41, 59, 0.65);
+          backdrop-filter: blur(12px);
+          padding: 14px;
+          border-radius: 12px;
           width: 450px;
-          margin: 0 auto 15px auto;
+          margin: 0 auto 20px auto;
           display: flex;
           justify-content: space-around;
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
         .config-bar input {
           background: #0f172a;
           border: 1px solid #475569;
           color: #fff;
-          padding: 6px 10px;
+          padding: 6px 12px;
           border-radius: 6px;
           font-weight: 600;
+          outline: none;
         }
 
         .global-btns {
-          margin: 15px 0 25px 0;
+          margin: 15px 0 30px 0;
         }
 
         .grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 15px;
-          max-width: 1050px;
+          gap: 20px;
+          max-width: 1100px;
           margin: 0 auto;
         }
 
         .card {
-          background: rgba(30, 41, 59, 0.8);
-          backdrop-filter: blur(10px);
-          padding: 18px;
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(30, 41, 59, 0.7);
+          backdrop-filter: blur(12px);
+          padding: 20px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           text-align: left;
           box-shadow: 0 10px 25px rgba(0,0,0,0.4);
           display: flex;
@@ -186,8 +191,8 @@ app.get('/', (req, res) => {
         }
 
         .card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+          transform: translateY(-4px);
+          box-shadow: 0 15px 35px rgba(56, 189, 248, 0.2);
           border-color: rgba(56, 189, 248, 0.4);
         }
 
@@ -199,16 +204,16 @@ app.get('/', (req, res) => {
         }
 
         .card p {
-          margin: 4px 0 8px 0;
+          margin: 6px 0 8px 0;
           font-size: 0.8rem;
           color: #94a3b8;
           word-break: break-all;
         }
 
         .login-box {
-          background: rgba(15, 23, 42, 0.9);
+          background: rgba(15, 23, 42, 0.85);
           padding: 10px;
-          margin: 8px 0;
+          margin: 10px 0;
           border-radius: 8px;
           border: 1px solid #38bdf8;
           font-size: 0.75rem;
@@ -232,60 +237,61 @@ app.get('/', (req, res) => {
         }
 
         button {
-          padding: 8px 14px;
+          padding: 10px 14px;
           cursor: pointer;
           border: none;
           border-radius: 8px;
-          font-weight: bold;
+          font-weight: 600;
           font-size: 0.85rem;
-          transition: filter 0.2s;
+          transition: filter 0.2s, transform 0.1s;
         }
 
         button:active {
-          transform: scale(0.97);
+          transform: scale(0.96);
         }
 
-        .btn-connect { background: #22c55e; color: white; flex: 1; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+        .btn-connect { background: #22c55e; color: white; flex: 1; box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
         .btn-connect:hover { background: #16a34a; }
 
-        .btn-disconnect { background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+        .btn-disconnect { background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
         .btn-disconnect:hover { background: #dc2626; }
 
-        .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-row { display: flex; gap: 10px; margin-top: auto; }
 
         .btn-global-connect {
           background: linear-gradient(135deg, #22c55e, #16a34a);
           color: white;
-          padding: 10px 20px;
-          font-size: 0.9rem;
-          margin-right: 10px;
+          padding: 12px 24px;
+          font-size: 0.95rem;
+          margin-right: 12px;
           border-radius: 8px;
           border: none;
-          font-weight: bold;
-          box-shadow: 0 4px 15px rgba(34,197,94,0.4);
+          font-weight: 600;
+          box-shadow: 0 6px 20px rgba(34,197,94,0.4);
         }
 
         .btn-global-disconnect {
           background: linear-gradient(135deg, #ef4444, #dc2626);
           color: white;
-          padding: 10px 20px;
-          font-size: 0.9rem;
+          padding: 12px 24px;
+          font-size: 0.95rem;
           border-radius: 8px;
           border: none;
-          font-weight: bold;
-          box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+          font-weight: 600;
+          box-shadow: 0 6px 20px rgba(239,68,68,0.4);
         }
 
-        .status-online { color: #4ade80; font-weight: bold; text-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .status-online { color: #4ade80; font-weight: bold; text-shadow: 0 0 10px rgba(74,222,128,0.4); }
         .status-offline { color: #f87171; font-weight: bold; }
         .status-awaiting { color: #fbbf24; font-weight: bold; }
         .status-connecting { color: #38bdf8; font-weight: bold; }
       </style>
     </head>
     <body>
-      <div class="scenery-bg">
-        <div class="mountains"></div>
-        <div class="river"></div>
+      <div class="mesh-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
       </div>
 
       <h1>⚡ MintSMP Multi-Bot Dashboard</h1>
@@ -622,7 +628,7 @@ discordClient.on('messageCreate', (message) => {
 
   if (targetBot && botSpawned[botId]) {
     sendToGame(targetBot, contentText);
-    message.reply(`✅ Executed \`${contentText}\` on Bot ${botId}.`);
+    message.reply(`✅ Executed \`${contentText}\` on Bot ${botId}.` );
   } else {
     message.reply(`❌ Bot ${botId} is either offline or hasn't fully spawned into the world yet.`);
   }
