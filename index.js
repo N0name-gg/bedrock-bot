@@ -17,13 +17,14 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Automatically generate accounts 50 through 58 (total of 9 accounts)
+// Automatically generate accounts gingerpatron001 through gingerpatron005 (total of 5 accounts)
 const botsConfig = [];
-for (let i = 50; i <= 58; i++) {
+for (let i = 1; i <= 5; i++) {
+  const paddedId = String(i).padStart(3, '0');
   botsConfig.push({
-    id: i - 49, // Bot 1 to 9
-    username: `vsurya.prathik${i}@outlook.com`,
-    folder: `./profiles/bot${i - 49}`
+    id: i, // Bot 1 to 5
+    username: `gingerpatron${paddedId}@outlook.com`,
+    folder: `./profiles/bot${i}`
   });
 }
 
@@ -74,11 +75,12 @@ app.get('/', (req, res) => {
         .status-online { color: #22c55e; font-weight: bold; }
         .status-offline { color: #ef4444; font-weight: bold; }
         .status-awaiting { color: #f59e0b; font-weight: bold; }
+        .status-connecting { color: #38bdf8; font-weight: bold; }
       </style>
     </head>
     <body>
       <h1>MintSMP Multi-Bot Dashboard</h1>
-      <p style="color: #94a3b8;">Managing 9 Isolated Bedrock Accounts with Direct Login Links</p>
+      <p style="color: #94a3b8;">Managing 5 Isolated Bedrock Accounts (gingerpatron001 - gingerpatron005)</p>
 
       <div class="config-bar">
         <div>Server IP: <input type="text" id="serverIp" value="mintsmp.net"></div>
@@ -109,6 +111,7 @@ app.get('/', (req, res) => {
               let statusClass = 'status-offline';
               if (info.status === 'Online') statusClass = 'status-online';
               else if (info.status === 'Awaiting Login') statusClass = 'status-awaiting';
+              else if (info.status === 'Connecting...') statusClass = 'status-connecting';
 
               let loginHtml = '';
               if (info.user_code && info.verification_uri) {
@@ -230,10 +233,21 @@ function startBot(botInfo, host, port) {
 
     activeBots[id] = client;
 
-    client.on('spawn', () => {
-      console.log(`✅ Bot ${id} (${botInfo.username}) spawned successfully!`);
-      botSpawned[id] = true;
-      botLoginData[id] = null; // Clear login prompt once successfully authenticated & spawned
+    const markOnline = () => {
+      if (!botSpawned[id]) {
+        console.log(`✅ Bot ${id} (${botInfo.username}) successfully entered the world!`);
+        botSpawned[id] = true;
+        botLoginData[id] = null; // Clear login prompt once authenticated & spawned
+      }
+    };
+
+    // Multiple listeners to ensure status immediately flips to Online when in-game
+    client.on('spawn', markOnline);
+    client.on('join', markOnline);
+    client.on('packet', (packet) => {
+      if (packet.name === 'play_status' || packet.name === 'start_game') {
+        markOnline();
+      }
     });
 
     client.on('error', (err) => {
@@ -254,7 +268,7 @@ function startBot(botInfo, host, port) {
   }
 }
 
-// Background Sequential Loop: Checks bots 1 to 9 in order with a 6-second delay between each
+// Background Sequential Loop: Checks bots 1 to 5 in order with a 6-second delay between each
 async function runAutoConnectLoop() {
   while (true) {
     for (let i = 0; i < botsConfig.length; i++) {
@@ -356,7 +370,7 @@ discordClient.on('messageCreate', (message) => {
 
   const args = message.content.split(' ');
   if (args.length < 3) {
-    return message.reply('❌ Invalid format. Use: `!cmd <1-9> <command>` or `!cmd all <command>`');
+    return message.reply('❌ Invalid format. Use: `!cmd <1-5> <command>` or `!cmd all <command>`');
   }
 
   const targetId = args[1].toLowerCase();
