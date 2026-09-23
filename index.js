@@ -17,14 +17,13 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Automatically generate accounts gingerpatron001 through gingerpatron005 (total of 5 accounts)
+// Automatically generate accounts hyper.eagle50 through hyper.eagle58 (total of 9 accounts)
 const botsConfig = [];
-for (let i = 1; i <= 5; i++) {
-  const paddedId = String(i).padStart(3, '0');
+for (let i = 50; i <= 58; i++) {
   botsConfig.push({
-    id: i, // Bot 1 to 5
-    username: `gingerpatron${paddedId}@outlook.com`,
-    folder: `./profiles/bot${i}`
+    id: i - 49, // Bot 1 to 9
+    username: `hyper.eagle${i}@outlook.com`,
+    folder: `./profiles/bot${i - 49}`
   });
 }
 
@@ -44,7 +43,7 @@ let currentHost = 'mintsmp.net';
 let currentPort = 25125;
 
 // ==========================================
-// HTML DASHBOARD INTERFACE (with Embedded Login Boxes)
+// HTML DASHBOARD INTERFACE (with Animated Mountain & River Background)
 // ==========================================
 app.get('/', (req, res) => {
   res.send(`
@@ -54,33 +53,243 @@ app.get('/', (req, res) => {
       <meta charset="UTF-8">
       <title>MintSMP Multi-Bot Dashboard</title>
       <style>
-        body { background: #0f172a; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 20px; margin: 0; }
-        h1 { color: #38bdf8; margin-bottom: 5px; }
-        .config-bar { background: #1e293b; padding: 12px; border-radius: 8px; width: 500px; margin: 15px auto; display: flex; justify-content: space-around; }
-        .config-bar input { background: #0f172a; border: 1px solid #475569; color: #fff; padding: 6px 10px; border-radius: 4px; }
-        .global-btns { margin: 15px 0; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 1050px; margin: 0 auto; }
-        .card { background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-between; }
-        .card h3 { margin-top: 0; margin-bottom: 5px; color: #f8fafc; font-size: 16px; }
-        .card p { margin: 4px 0 8px 0; font-size: 12px; color: #94a3b8; word-break: break-all; }
-        .login-box { background: #0f172a; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid #38bdf8; font-size: 12px; }
-        .login-box a { color: #38bdf8; font-weight: bold; text-decoration: underline; }
-        .login-code { color: #f43f5e; font-size: 15px; font-weight: bold; background: #1e293b; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-        button { padding: 8px 14px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; }
-        .btn-connect { background: #22c55e; color: white; flex: 1; }
-        .btn-disconnect { background: #ef4444; color: white; flex: 1; }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+        body {
+          margin: 0;
+          padding: 20px;
+          font-family: 'Poppins', sans-serif;
+          color: #fff;
+          text-align: center;
+          min-height: 100vh;
+          overflow-x: hidden;
+          background: #0f172a;
+        }
+
+        /* Animated Mountain & Flowing River Background */
+        .scenery-bg {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: -1;
+          background: linear-gradient(to bottom, #1e293b, #0f172a);
+          overflow: hidden;
+        }
+
+        /* Mountain Silhouette Layer */
+        .mountains {
+          position: absolute;
+          bottom: 30%;
+          left: 0;
+          width: 200%;
+          height: 40vh;
+          background: linear-gradient(135deg, #334155 25%, #1e293b 50%, #0f172a 100%);
+          clip-path: polygon(0% 100%, 10% 60%, 25% 85%, 40% 40%, 60% 90%, 75% 50%, 90% 80%, 100% 45%, 100% 100%);
+          opacity: 0.6;
+        }
+
+        /* Flowing River Layer with Shimmer Effect */
+        .river {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 35vh;
+          background: linear-gradient(to bottom, #0284c7, #0369a1, #0f172a);
+          overflow: hidden;
+        }
+
+        .river::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -50%;
+          width: 200%;
+          height: 100%;
+          background: repeating-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.05) 0px,
+            rgba(255, 255, 255, 0.05) 20px,
+            transparent 20px,
+            transparent 40px
+          );
+          animation: flowRiver 6s linear infinite;
+        }
+
+        @keyframes flowRiver {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(50px); }
+        }
+
+        h1 {
+          color: #38bdf8;
+          font-weight: 800;
+          font-size: 2.2rem;
+          margin-bottom: 5px;
+          text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+
+        p.subtitle {
+          color: #cbd5e1;
+          font-size: 0.95rem;
+          margin-bottom: 20px;
+        }
+
+        .config-bar {
+          background: rgba(30, 41, 59, 0.85);
+          backdrop-filter: blur(8px);
+          padding: 12px;
+          border-radius: 10px;
+          width: 450px;
+          margin: 0 auto 15px auto;
+          display: flex;
+          justify-content: space-around;
+          border: 1px solid rgba(56, 189, 248, 0.3);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        .config-bar input {
+          background: #0f172a;
+          border: 1px solid #475569;
+          color: #fff;
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-weight: 600;
+        }
+
+        .global-btns {
+          margin: 15px 0 25px 0;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 15px;
+          max-width: 1050px;
+          margin: 0 auto;
+        }
+
+        .card {
+          background: rgba(30, 41, 59, 0.8);
+          backdrop-filter: blur(10px);
+          padding: 18px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          text-align: left;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+          border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .card h3 {
+          margin-top: 0;
+          margin-bottom: 5px;
+          color: #f8fafc;
+          font-size: 1.1rem;
+        }
+
+        .card p {
+          margin: 4px 0 8px 0;
+          font-size: 0.8rem;
+          color: #94a3b8;
+          word-break: break-all;
+        }
+
+        .login-box {
+          background: rgba(15, 23, 42, 0.9);
+          padding: 10px;
+          margin: 8px 0;
+          border-radius: 8px;
+          border: 1px solid #38bdf8;
+          font-size: 0.75rem;
+        }
+
+        .login-box a {
+          color: #38bdf8;
+          font-weight: bold;
+          text-decoration: underline;
+        }
+
+        .login-code {
+          color: #f43f5e;
+          font-size: 0.95rem;
+          font-weight: bold;
+          background: #1e293b;
+          padding: 2px 6px;
+          border-radius: 4px;
+          display: inline-block;
+          margin-top: 4px;
+        }
+
+        button {
+          padding: 8px 14px;
+          cursor: pointer;
+          border: none;
+          border-radius: 8px;
+          font-weight: bold;
+          font-size: 0.85rem;
+          transition: filter 0.2s;
+        }
+
+        button:active {
+          transform: scale(0.97);
+        }
+
+        .btn-connect { background: #22c55e; color: white; flex: 1; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+        .btn-connect:hover { background: #16a34a; }
+
+        .btn-disconnect { background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+        .btn-disconnect:hover { background: #dc2626; }
+
         .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-global-connect { background: #16a34a; color: white; padding: 10px 20px; font-size: 14px; margin-right: 10px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; }
-        .btn-global-disconnect { background: #dc2626; color: white; padding: 10px 20px; font-size: 14px; cursor: pointer; border-radius: 6px; border: none; font-weight: bold; }
-        .status-online { color: #22c55e; font-weight: bold; }
-        .status-offline { color: #ef4444; font-weight: bold; }
-        .status-awaiting { color: #f59e0b; font-weight: bold; }
+
+        .btn-global-connect {
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: white;
+          padding: 10px 20px;
+          font-size: 0.9rem;
+          margin-right: 10px;
+          border-radius: 8px;
+          border: none;
+          font-weight: bold;
+          box-shadow: 0 4px 15px rgba(34,197,94,0.4);
+        }
+
+        .btn-global-disconnect {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          color: white;
+          padding: 10px 20px;
+          font-size: 0.9rem;
+          border-radius: 8px;
+          border: none;
+          font-weight: bold;
+          box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+        }
+
+        .status-online { color: #4ade80; font-weight: bold; text-shadow: 0 0 8px rgba(74,222,128,0.4); }
+        .status-offline { color: #f87171; font-weight: bold; }
+        .status-awaiting { color: #fbbf24; font-weight: bold; }
         .status-connecting { color: #38bdf8; font-weight: bold; }
       </style>
     </head>
     <body>
-      <h1>MintSMP Multi-Bot Dashboard</h1>
-      <p style="color: #94a3b8;">Managing 5 Isolated Bedrock Accounts (gingerpatron001 - gingerpatron005)</p>
+      <div class="scenery-bg">
+        <div class="mountains"></div>
+        <div class="river"></div>
+      </div>
+
+      <h1>⚡ MintSMP Multi-Bot Dashboard</h1>
+      <p class="subtitle">Managing 9 Accounts (hyper.eagle50 - hyper.eagle58)</p>
 
       <div class="config-bar">
         <div>Server IP: <input type="text" id="serverIp" value="mintsmp.net"></div>
@@ -164,7 +373,7 @@ app.get('/', (req, res) => {
         }
 
         fetchStatus();
-        setInterval(fetchStatus, 3000); // Auto-refresh status & login links every 3 seconds
+        setInterval(fetchStatus, 3000);
       </script>
     </body>
     </html>
@@ -237,11 +446,10 @@ function startBot(botInfo, host, port) {
       if (!botSpawned[id]) {
         console.log(`✅ Bot ${id} (${botInfo.username}) successfully entered the world!`);
         botSpawned[id] = true;
-        botLoginData[id] = null; // Clear login prompt once authenticated & spawned
+        botLoginData[id] = null;
       }
     };
 
-    // Multiple listeners to ensure status immediately flips to Online when in-game
     client.on('spawn', markOnline);
     client.on('join', markOnline);
     client.on('packet', (packet) => {
@@ -268,7 +476,7 @@ function startBot(botInfo, host, port) {
   }
 }
 
-// Background Sequential Loop: Checks bots 1 to 5 in order with a 6-second delay between each
+// Background Sequential Loop: Checks bots 1 to 9 in order with a 6-second delay between each
 async function runAutoConnectLoop() {
   while (true) {
     for (let i = 0; i < botsConfig.length; i++) {
@@ -370,7 +578,7 @@ discordClient.on('messageCreate', (message) => {
 
   const args = message.content.split(' ');
   if (args.length < 3) {
-    return message.reply('❌ Invalid format. Use: `!cmd <1-5> <command>` or `!cmd all <command>`');
+    return message.reply('❌ Invalid format. Use: `!cmd <1-9> <command>` or `!cmd all <command>`');
   }
 
   const targetId = args[1].toLowerCase();
